@@ -9,8 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bootstrap": "^5.3.2",
+    "bootstrap-icons-vue": "^1.11.3",
+    "bootstrap-vue": "^2.23.1",
     "chart.js": "^4.4.1",
-    "vue": "^3.4.15",
+    "requirejs": "^2.3.6",
+    "requirejs-vue": "^1.1.5",
+    "vue": "^3.4.19",
     "vue-chartjs": "^5.3.0"
   },
   "devDependencies": {
