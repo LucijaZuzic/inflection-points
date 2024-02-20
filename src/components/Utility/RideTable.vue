@@ -57,8 +57,8 @@ export default {
             currentPage: 1,
             columns: [
                 { key: "vehicle", sortable: true, classes: "data_table_overflow" },
-                { key: "ride", sortable: false, classes: "data_table_overflow" },
-                { key: "combined", sortable: true, classes: "data_table_overflow" },
+                { key: "ride", sortable: true, classes: "data_table_overflow" },
+                { key: "combined", sortable: false, classes: "data_table_overflow" },
             ],
             sortingOrderOptions: [
                 { text: "Uzlazno", value: "asc" },
@@ -259,6 +259,9 @@ export default {
     watch: {
         perPage: function () {
             this.currentPage = 1;
+        },
+        only_rated: function () {
+            this.fetch_rides();
         }
     }
 };
@@ -267,7 +270,7 @@ export default {
 <template>
     <body class="my_body">
         <h4 class="display-4">
-            <va-icon size="large" name="person_search"></va-icon>
+            <va-icon size="large" name="rule_folder"></va-icon>
             &nbsp; Pretraži vožnje
         </h4>
         <LoadingBar v-if="!fully_loaded"></LoadingBar>
@@ -275,18 +278,20 @@ export default {
             <br />
             <va-card>
                 <br />
-                <va-checkbox style="display: inline-block" label="Prikaži samo ocijenjene" v-model="only_rated" />
+                <div>
+                    <va-checkbox style="display: inline-block" label="Prikaži samo ocijenjene" v-model="only_rated" />
+                </div>
                 <br />
                 <h4 v-if="only_rated">WS</h4>
                 <br v-if="only_rated" />
-                <va-button v-if="only_rated" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
+                <va-button size="small" v-if="only_rated" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
                     v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
                 </va-button>
                 <br v-if="only_rated" />
                 <va-card-content>
                     <h4>Vozila</h4>
                     <br />
-                    <va-button outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
+                    <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
                         v-for="v in vehicle_ix_array" v-on:click="useVehicle(v)">{{ v.text }}
                     </va-button>
                 </va-card-content>

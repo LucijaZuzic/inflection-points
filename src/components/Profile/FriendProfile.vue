@@ -88,29 +88,29 @@ export default {
         <h4 class="display-4">
           <va-icon size="large" name="account_box"></va-icon>&nbsp; Profil
           korisnika
-        </h4>
-        <br />
+        </h4> 
         <va-divider></va-divider>
         <div style="font-weight: bold">
           <va-icon name="person"></va-icon> &nbsp;
           {{ friend.displayName }} &nbsp;
           <va-icon name="email"></va-icon> &nbsp;
           {{ friend.email }}  
-        </div> 
-        <RideTable />
+        </div>  
+        <va-divider></va-divider> 
+        <RideTable :user_to_find="friend.uid" /> 
       </span>
       <span v-else>
         <h4 class="display-4">
           <va-icon size="large" name="account_box"></va-icon>&nbsp; Moj profil
-        </h4>
-        <br />
+        </h4> 
         <va-divider></va-divider>
         <div style="font-weight: bold">
           <va-icon name="person"></va-icon> &nbsp;
           {{ friend.displayName }} &nbsp;
           <va-icon name="email"></va-icon> &nbsp;
           {{ friend.email }} 
-        </div>
+        </div> 
+        <va-divider></va-divider> 
         <RideTable :user_to_find="friend.uid" /> 
       </span> 
     </span>

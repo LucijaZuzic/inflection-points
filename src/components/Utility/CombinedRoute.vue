@@ -1,10 +1,8 @@
 <template>
-    <router-link v-bind:to="{ name: 'rate', params: { combined: cr } }"> 
-        <va-button outline :rounded="false" style="border: none" color="success" v-if="sr">
-            <va-icon name="done" color="success" />
+    <router-link v-bind:to="{ name: 'rate', params: { combined: cr } }">
+        <va-button outline :rounded="false" style="border: none" v-if="sr" icon="done" color="success">
         </va-button>
-        <va-button outline :rounded="false" style="border: none" color="danger" v-else >
-            <va-icon name="close" color="danger" />
+        <va-button outline :rounded="false" style="border: none" v-else icon="close" color="danger">
         </va-button>
     </router-link>
 </template>
@@ -13,11 +11,11 @@
 export default {
     props: ["combined_route", "status_route"],
     emits: ["input"],
-    data() { 
+    data() {
         this.cr = this.$props.combined_route;
         this.sr = this.$props.status_route;
-        return { 
+        return {
         };
-    },  
+    },
 };
 </script>

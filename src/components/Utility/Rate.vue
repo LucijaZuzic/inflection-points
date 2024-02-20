@@ -1,9 +1,9 @@
 <template>
-  <div>Vehicle {{ vehicle }} Ride {{ ride }} </div>
+  <h1>Vehicle {{ vehicle }} Ride {{ ride }} </h1>
   <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
     :selectable_entry="false" />
   <br />
-  <va-button v-on:click="sendData()" :disabled="!can_send">SEND</va-button>
+  <va-button v-on:click="sendData()" :disabled="!can_send || !user.uid">SEND</va-button>
   <br />
   <MyImage v-for="(similar_entry, index_similar_entry) in selected_similar" :image_entry='similar_entry.entry'
     :selected_entry="similar_entry.is_selected" :selectable_entry="true"

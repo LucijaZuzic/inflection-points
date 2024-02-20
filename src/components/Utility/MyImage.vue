@@ -1,9 +1,10 @@
 <template>
-    <div style="display: inline-block; vertical-align: top; text-align: left; width: 25%"
-        v-on:click="my_selected = !my_selected; $emit('input', my_selected)">
-        <va-icon name="done" v-if="my_selectable" :color="color_compute" style="border: none" /> 
-        <va-image :ratio="1" :id="my_vehicle + '/' + my_ride" :src="'/cleaned_png/' + my_vehicle + '/' + my_ride + '/' + my_vehicle + '_' + my_ride + '.png'" ></va-image>
-    </div>
+    <va-card :color="color_compute"
+        style="padding: 5px; margin: 5px; display: inline-block; vertical-align: top; text-align: left; width: 20%"
+        v-on:click="checkSelect()">
+        <va-image :ratio="1" :id="my_vehicle + '/' + my_ride"
+            :src="'/cleaned_png/' + my_vehicle + '/' + my_ride + '/' + my_vehicle + '_' + my_ride + '.png'"></va-image>
+    </va-card>
 </template>
 
 <script>
@@ -20,9 +21,20 @@ export default {
             my_selected: image_selected,
             my_selectable: image_selectable,
         };
-    },  
+    },
+    methods: {
+        checkSelect: function () {
+            if (this.my_selectable) {
+                this.my_selected = !this.my_selected;
+                this.$emit('input', this.my_selected);
+            }
+        }
+    },
     computed: {
         color_compute: function () {
+            if (!this.my_selectable) {
+                return "primary";
+            }
             if (this.my_selected) {
                 return "success";
             } else {

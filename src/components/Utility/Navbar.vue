@@ -3,6 +3,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import icon_default from "../../assets/icons/extension_FILL0_wght400_GRAD0_opsz48.png";
 import icon_profile from "../../assets/icons/person_FILL0_wght400_GRAD0_opsz48.png";
+import icon_folder from "../../assets/icons/rule_folder_FILL0_wght400_GRAD0_opsz48.png";
 import icon_search from "../../assets/icons/person_search_FILL0_wght400_GRAD0_opsz48.png"; 
  
 export default {
@@ -12,7 +13,7 @@ export default {
         profile: icon_profile,  
         search: icon_search,
         other: icon_default,
-        rate: icon_default,
+        rate: icon_folder,
       },
       name_to_title: {
         not_found: "Nije pronađeno",
