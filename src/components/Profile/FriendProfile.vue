@@ -3,9 +3,7 @@ import NoDataToDisplay from "../Utility/NoDataToDisplay.vue";
   
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
-import {
-  usersRef, 
-} from "../../firebase_main.js";
+import { usersRef } from "../../firebase_main.js";
  
 import LoadingBar from "../Utility/LoadingBar.vue";
 import RideTable from "../Utility/RideTable.vue";
@@ -113,7 +111,7 @@ export default {
           <va-icon name="email"></va-icon> &nbsp;
           {{ friend.email }} 
         </div>
-        <RideTable /> 
+        <RideTable :user_to_find="friend.uid" /> 
       </span> 
     </span>
     <span v-else>

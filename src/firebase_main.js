@@ -22,12 +22,12 @@ firebase.initializeApp(firebaseConfig);
 const projectFirestore = firebase.firestore();
 const projectAuth = firebase.auth();
 const projectStorage = firebase.storage();
-const usersRef = projectFirestore.collection("users");  
-const friendsRef = projectFirestore.collection("friends");
-const friendRequestsRef = projectFirestore.collection("friendRequests");
+const usersRef = projectFirestore.collection("users");   
+const ratingsRef = projectFirestore.collection("ratings");   
 
 // Initialize the FirebaseUI Widget using Firebase.
 const ui = new firebaseui.auth.AuthUI(firebase.auth());
+
 // Set up sign-in methods
 const uiConfig = {
   signInOptions: [
@@ -37,13 +37,13 @@ const uiConfig = {
   signInSuccessUrl: ["#/sign-in-success"],
   // Other config options...
 };
+
 export {
   ui,
   uiConfig,
   projectFirestore,
   projectAuth,
   projectStorage, 
-  usersRef, 
-  friendsRef,
-  friendRequestsRef,
+  usersRef,
+  ratingsRef
 };

@@ -1,5 +1,5 @@
 <script>
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { TwitterAuthProvider, getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   usersRef
 } from "../../firebase_main.js";
@@ -67,8 +67,9 @@ export default {
       return source?.toString?.() === this.filter;
     },
     fetch_users() {
+      this.fully_loaded = false;
       this.friends = [];
-      this.status = []; 
+      this.status = [];
       let me = this;
       usersRef.get().then(function (snapshotUser) {
         snapshotUser.forEach(function (childSnapshotUser) {
@@ -134,6 +135,11 @@ export default {
         : this.filtered.length;
     },
   },
+  watch: {
+    perPage: function () {
+      this.currentPage = 1; 
+    }
+  }
 };
 </script>
 
@@ -155,12 +161,12 @@ export default {
         <br />
         <div>
           <div style="display: inline-block">
-            <MyCounter :min_value="1" :max_value="Math.ceil(this.filtered.length)" v-bind:value="perPage"
+            <MyCounter :key="perPage" :min_value="1" :max_value="Math.ceil(this.filtered.length)" v-bind:value="perPage"
               @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Po stranici'">
             </MyCounter>
           </div>
           <div style="display: inline-block; margin-left: 10px">
-            <MyCounter :min_value="1" :max_value="Math.floor(this.filtered.length / perPage)" v-bind:value="currentPage"
+            <MyCounter :key="currentPage" :min_value="1" :max_value="Math.floor(this.filtered.length / perPage)" v-bind:value="currentPage"
               @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Stranica'">
             </MyCounter>
           </div>
@@ -172,14 +178,14 @@ export default {
           no-data-html="Nema podataka." :filter-method="customFilteringFn">
           <template #header(user_display_name)>Korisnik (ime)</template>
           <template #header(user_email)>Korisnik (email)</template>
-          <template #header(user_id)></template> 
+          <template #header(user_id)></template>
           <template #cell(user_email)="{ source: user_email }">
             <router-link v-bind:to="{ name: 'profile', params: { email: user_email } }">
               <va-button outline :rounded="false" style="border: none"><va-icon name="email"></va-icon> &nbsp;
                 {{ user_email }}</va-button>
             </router-link>
           </template>
-          <template #cell(user_id)="{ source: user_id }"> 
+          <template #cell(user_id)="{ source: user_id }">
           </template>
         </va-data-table>
       </span>
