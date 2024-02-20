@@ -21,16 +21,16 @@
       {{ some_text }}
       <va-button
         v-if="is_zoom"
-        :disabled="100 == value"
+        :disabled="100 == props_val"
         size="small"
         outline
         round
         :rounded="false"
         style="border: none"
         @click="
-          value = 100;
-          value = Math.max(min_value, Math.min(value, max_value));
-          $emit('input', value);
+          props_val = 100;
+          props_val = Math.max(min_value, Math.min(props_val, max_value)); 
+          $emit('input', props_val);
         "
       >
         <va-icon name="restart_alt"></va-icon>
@@ -38,71 +38,71 @@
     </div>
     <br />
     <va-button
-      :disabled="min_value >= value"
+      :disabled="min_value >= props_val"
       size="small"
       outline
       round
       :rounded="false"
       style="border: none"
       @click="
-        value = min_value;
-        value = Math.max(min_value, Math.min(value, max_value));
-        $emit('input', value);
+        props_val = min_value;
+        props_val = Math.max(min_value, Math.min(props_val, max_value)); 
+        $emit('input', props_val);
       "
     >
       <va-icon name="first_page"></va-icon>
     </va-button>
     <va-button
-      :disabled="min_value >= value"
+      :disabled="min_value >= props_val"
       size="small"
       outline
       round
       :rounded="false"
       style="border: none"
       @click="
-        value = value - 1;
-        value = Math.max(min_value, Math.min(value, max_value));
-        $emit('input', value);
+        props_val = props_val - 1;
+        props_val = Math.max(min_value, Math.min(props_val, max_value)); 
+        $emit('input', props_val);
       "
     >
       <va-icon name="chevron_left" />
     </va-button>
     <input
-      @input="
-        value = Math.max(min_value, Math.min(value, max_value));
-        $emit('input', value);
+      @input=" 
+        props_val = Math.max(min_value, Math.min(props_val, max_value)); 
+        $emit('input', props_val);
       "
-      v-model="value"
+      v-model="props_val"
       :min="min_value"
       :max="max_value"
       type="number"
     />
     <va-button
-      :disabled="max_value <= value"
+      :disabled="max_value <= props_val"
       size="small"
       outline
       round
       :rounded="false"
       style="border: none"
       @click="
-        value = value + 1;
-        value = Math.max(min_value, Math.min(value, max_value));
-        $emit('input', value);
+        props_val = props_val + 1;
+        props_val = Math.max(min_value, Math.min(props_val, max_value)); 
+        $emit('input', props_val);
       "
     >
       <va-icon name="chevron_right" />
     </va-button>
     <va-button
-      :disabled="max_value <= value"
+      :disabled="max_value <= props_val"
       size="small"
       outline
       round
       :rounded="false"
       style="border: none"
       @click="
-        value = max_value;
-        value = Math.max(min_value, Math.min(value, max_value));
-        $emit('input', value);
+        props_val = max_value;
+        props_val = Math.max(min_value, Math.min(props_val, max_value)); 
+        $emit('input', props_val);
       "
     >
       <va-icon name="last_page"></va-icon>
@@ -124,7 +124,10 @@ export default {
   ],
   components: {},
   data() {
-    return {};
+    var props_val = this.$props.value;
+    return {
+      props_val: props_val
+    };
   },
 };
 </script>

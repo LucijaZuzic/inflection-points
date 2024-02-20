@@ -12,6 +12,7 @@ export default {
         profile: icon_profile,  
         search: icon_search,
         other: icon_default,
+        rate: icon_default,
       },
       name_to_title: {
         not_found: "Nije pronađeno",
@@ -20,6 +21,7 @@ export default {
         login: "Prijava", 
         profile: "Profil",
         user_search: "Pretraži korisnike", 
+        rate: "Usporedi",
       },
       selected_destination: null,
       bgcolor: "#ffffff",
