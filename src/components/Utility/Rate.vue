@@ -1,7 +1,7 @@
 <template>
   <div>Vehicle {{ vehicle }} Ride {{ ride }} </div>
-  {{ selected_similar }}
-  <MyImage :image_entry='{ "position": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false" :selectable_entry="false" />
+  <MyImage :image_entry='{ "position": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
+    :selectable_entry="false" />
   <br />
   <MyImage v-for="(similar_entry, index_similar_entry) in selected_similar" :image_entry='similar_entry.entry'
     :selected_entry="similar_entry.is_selected" :selectable_entry="true"
@@ -11,7 +11,10 @@
 <script>
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import AllSimilar from '../../assets/marker_all_percent_1_5.json'
+import AllSimilar5 from '../../assets/marker_all_percent_1_5.json'
+import AllSimilar10 from '../../assets/marker_all_percent_1_10.json'
+import AllSimilar15 from '../../assets/marker_all_percent_1_15.json'
+import AllSimilar20 from '../../assets/marker_all_percent_1_20.json'
 import MyImage from './MyImage.vue'
 
 export default {
@@ -38,6 +41,17 @@ export default {
     let split_vals = combined.split("_");
     this.vehicle = split_vals[0];
     this.ride = split_vals[1];
+    this.ws = split_vals[2];
+    var AllSimilar = AllSimilar5;
+    if (this.ws == 10) {
+      AllSimilar = AllSimilar10;
+    } 
+    if (this.ws == 15) {
+      AllSimilar = AllSimilar15;
+    } 
+    if (this.ws == 20) {
+      AllSimilar = AllSimilar20;
+    } 
     let similar_get = [];
     for (var i = 0; i < AllSimilar.compare_to.length; i++) {
       let some_ride = AllSimilar.compare_to[i];
@@ -56,10 +70,19 @@ export default {
       similar: similar_get,
       similar_shuffled: shuffle_me,
       vehicle: split_vals[0],
-      ride: split_vals[1]
+      ride: split_vals[1],
+      ws: split_vals[2]  
     };
   },
-  methods: {
+  created() {
+    this.$watch(
+      () => this.$route.params,
+      (toParams, previousParams) => {
+        this.$router.go();
+      }
+    );
+  },
+  methods: { 
     shuffle(array) {
       let currentIndex = array.length, randomIndex;
 

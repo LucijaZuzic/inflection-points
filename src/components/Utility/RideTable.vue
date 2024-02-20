@@ -75,7 +75,10 @@ export default {
             columns: [
                 { key: "vehicle", sortable: true, classes: "data_table_overflow" },
                 { key: "ride", sortable: false, classes: "data_table_overflow" }, 
-                { key: "combined", sortable: true, classes: "data_table_overflow" },
+                { key: "combined5", sortable: true, classes: "data_table_overflow" },
+                { key: "combined10", sortable: true, classes: "data_table_overflow" },
+                { key: "combined15", sortable: true, classes: "data_table_overflow" },
+                { key: "combined20", sortable: true, classes: "data_table_overflow" },
             ],
             sortingOrderOptions: [
                 { text: "Uzlazno", value: "asc" },
@@ -107,7 +110,10 @@ export default {
                     me.rides.push({
                         vehicle: AllData.vehicles[i].vehicle,
                         ride: AllData.vehicles[i].rides[j].ride, 
-                        combined: part1 
+                        combined5: part1 + "_5",
+                        combined10: part1 + "_10",
+                        combined15: part1 + "_15",
+                        combined20: part1 + "_20",
                     });
                     me.status.push({
                         combined: part1,
@@ -221,12 +227,29 @@ export default {
                     no-data-html="Nema podataka." :filter-method="customFilteringFn">
                     <template #header(vehicle)>Vozilo</template>
                     <template #header(ride)>Vožnja</template> 
-                    <template #header(combined)></template>
-                    <template #cell(combined)="{ source: combined }">
-                        <router-link v-bind:to="{ name: 'rate', params: { combined: combined } }">
-                        <va-button outline :rounded="false" style="border: none"><va-icon name="email"></va-icon> &nbsp;
-                            {{ combined }}</va-button>
-                        </router-link>
+                    <template #header(combined5)>Ocjeni (ws 5)</template>
+                    <template #header(combined10)>Ocjeni (ws 10)</template>
+                    <template #header(combined15)>Ocjeni (ws 15)</template>
+                    <template #header(combined20)>Ocjeni (ws 20)</template>
+                    <template #cell(combined5)="{ source: combined5 }">
+                        <router-link v-bind:to="{ name: 'rate', params: { combined: combined5 } }">
+                            <va-button outline :rounded="false" style="border: none"><va-icon name="star" /></va-button>
+                        </router-link>  
+                    </template>
+                    <template #cell(combined10)="{ source: combined10 }">
+                        <router-link v-bind:to="{ name: 'rate', params: { combined: combined10 } }">
+                            <va-button outline :rounded="false" style="border: none"><va-icon name="star" /></va-button>
+                        </router-link>  
+                    </template>
+                    <template #cell(combined15)="{ source: combined15 }">
+                        <router-link v-bind:to="{ name: 'rate', params: { combined: combined15 } }">
+                            <va-button outline :rounded="false" style="border: none"><va-icon name="star" /></va-button>
+                        </router-link>  
+                    </template>
+                    <template #cell(combined20)="{ source: combined20 }">
+                        <router-link v-bind:to="{ name: 'rate', params: { combined: combined20 } }">
+                            <va-button outline :rounded="false" style="border: none"><va-icon name="star" /></va-button>
+                        </router-link>  
                     </template>
                 </va-data-table>
             </span>
