@@ -1,7 +1,7 @@
 <template>
     <div style="display: inline-block; vertical-align: top; text-align: left; width: 25%;"
         v-on:click="my_selected = !my_selected; $emit('input', my_selected)">
-        <va-icon class="btn" name="done" v-if="my_selectable" :color="color_compute" style="border: none" />
+        <va-icon name="done" v-if="my_selectable" :color="color_compute" style="border: none" />
         <img width="100%" :src='"/cleaned_png/" + my_vehicle + "/" + my_ride + "/" + my_vehicle + "_" + my_ride + ".png"' />
     </div>
 </template>
@@ -20,12 +20,7 @@ export default {
             my_selected: image_selected,
             my_selectable: image_selectable,
         };
-    },
-    methods: {
-        changeSelected() {
-
-        }
-    },
+    }, 
     computed: {
         color_compute: function () {
             if (this.my_selected) {
