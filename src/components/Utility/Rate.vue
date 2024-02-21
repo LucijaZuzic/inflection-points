@@ -1,12 +1,15 @@
 <template>
-  <h1>Vehicle {{ vehicle }} Ride {{ ride }} </h1>
+  <h4 class="display-4">
+    <va-icon size="large" name="rule_folder"></va-icon>
+    &nbsp; Vehicle {{ vehicle }} Ride {{ ride }}
+  </h4> 
   <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
     :selectable_entry="false" />
   <br />
-  <va-button v-on:click="sendData()" :disabled="!can_send || !user.uid">SEND</va-button>
+  <va-button v-on:click="sendData()" :disabled="!can_send || !user">Send</va-button>
   <br />
-  <MyImage v-for="(similar_entry, index_similar_entry) in selected_similar" :image_entry='similar_entry.entry'
-    :selected_entry="similar_entry.is_selected" :selectable_entry="true"
+  <MyImage :key="selected_similar[index_similar_entry].entry.vehicle + '_' + selected_similar[index_similar_entry].entry.ride + '_' + selected_similar[index_similar_entry].entry.order + '_' + selected_similar[index_similar_entry].is_selected" v-for="(similar_entry, index_similar_entry) in selected_similar" :image_entry='selected_similar[index_similar_entry].entry'
+    :selected_entry="selected_similar[index_similar_entry].is_selected" :selectable_entry="true"
     @input="(n) => (calculateSend(index_similar_entry))" />
 </template>
 

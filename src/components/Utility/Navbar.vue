@@ -16,13 +16,13 @@ export default {
         rate: icon_folder,
       },
       name_to_title: {
-        not_found: "Nije pronađeno",
-        not_entered: "Nije pronađeno",
-        sign_in_success: "Uspješna prijava",
-        login: "Prijava", 
-        profile: "Profil",
-        user_search: "Pretraži korisnike", 
-        rate: "Usporedi",
+        not_found: "Not found",
+        not_entered: "Not found",
+        sign_in_success: "Signed in",
+        login: "Sign in", 
+        profile: "Profile",
+        user_search: "Find users", 
+        rate: "Rate",
       },
       selected_destination: null,
       bgcolor: "#ffffff",
@@ -98,12 +98,12 @@ export default {
           <va-tab name="login">
             <span v-if="user != null" @click="signOut()" style="color: #ffffff">
               <va-icon name="logout" />
-              <span> Odjava </span>
+              <span> Sign out </span>
             </span>
             <router-link :to="'/login'" v-else>
               <span style="color: #ffffff">
                 <va-icon name="login" />
-                <span> Prijava </span>
+                <span> Sign in </span>
               </span>
             </router-link>
           </va-tab> 
@@ -111,7 +111,7 @@ export default {
             <router-link to="/user-search">
               <span style="color: #ffffff">
                 <va-icon name="person_search" />
-                <span> Pretraži korisnike </span>
+                <span> Find users </span>
               </span>
             </router-link>
           </va-tab>

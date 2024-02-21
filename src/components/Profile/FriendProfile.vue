@@ -1,15 +1,15 @@
 <script>
-import NoDataToDisplay from "../Utility/NoDataToDisplay.vue"; 
-  
+import NoDataToDisplay from "../Utility/NoDataToDisplay.vue";
+
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import { usersRef } from "../../firebase_main.js";
- 
+
 import LoadingBar from "../Utility/LoadingBar.vue";
 import RideTable from "../Utility/RideTable.vue";
 
 export default {
-  methods: { 
+  methods: {
     authenticate() {
       const auth = getAuth();
       onAuthStateChanged(auth, (user) => {
@@ -26,14 +26,14 @@ export default {
       });
       let requestedEmail = this.$route.params.email;
       let someUser = { email: "", displayName: "", uid: "" };
-      let my_activity = this; 
+      let my_activity = this;
       usersRef
         .get()
         .then(function (snapshotUser) {
           snapshotUser.forEach(function (childSnapshotUser) {
             let someEmail = childSnapshotUser.get("email");
             if (someEmail == requestedEmail) {
-              someUser = { 
+              someUser = {
                 email: childSnapshotUser.get("email"),
                 displayName: childSnapshotUser.get("displayName"),
                 uid: childSnapshotUser.id
@@ -45,7 +45,7 @@ export default {
           my_activity.friend = someUser;
           this.fully_loaded = true;
         });
-    } 
+    }
   },
   created() {
     this.$watch(
@@ -62,14 +62,14 @@ export default {
     this.authenticate();
   },
   data() {
-    return { 
-      fully_loaded: false,   
+    return {
+      fully_loaded: false,
       user: { email: "", displayName: "", uid: "" },
       friend: { email: "", displayName: "", uid: "" }
     };
   },
-  components: { 
-    NoDataToDisplay, 
+  components: {
+    NoDataToDisplay,
     LoadingBar,
     RideTable
   },
@@ -80,44 +80,40 @@ export default {
   <body class="my_body" v-if="!fully_loaded">
     <LoadingBar></LoadingBar>
   </body>
+
   <body class="my_body" v-else>
-    <span
-      v-if="friend.email != '' || friend.displayName != '' || friend.uid != ''"
-    >
+    <span v-if="friend.email != '' || friend.displayName != '' || friend.uid != ''">
       <span v-if="user.email != friend.email">
         <h4 class="display-4">
-          <va-icon size="large" name="account_box"></va-icon>&nbsp; Profil
-          korisnika
-        </h4> 
+          <va-icon size="large" name="account_box"></va-icon>&nbsp; User profile
+        </h4>
         <va-divider></va-divider>
         <div style="font-weight: bold">
           <va-icon name="person"></va-icon> &nbsp;
           {{ friend.displayName }} &nbsp;
           <va-icon name="email"></va-icon> &nbsp;
-          {{ friend.email }}  
-        </div>  
-        <va-divider></va-divider> 
-        <RideTable :user_to_find="friend.uid" /> 
+          {{ friend.email }}
+        </div>
+        <va-divider></va-divider>
+        <RideTable :user_to_find="friend.uid" />
       </span>
       <span v-else>
         <h4 class="display-4">
-          <va-icon size="large" name="account_box"></va-icon>&nbsp; Moj profil
-        </h4> 
+          <va-icon size="large" name="account_box"></va-icon>&nbsp; My profile
+        </h4>
         <va-divider></va-divider>
         <div style="font-weight: bold">
           <va-icon name="person"></va-icon> &nbsp;
           {{ friend.displayName }} &nbsp;
           <va-icon name="email"></va-icon> &nbsp;
-          {{ friend.email }} 
-        </div> 
-        <va-divider></va-divider> 
-        <RideTable :user_to_find="friend.uid" /> 
-      </span> 
+          {{ friend.email }}
+        </div>
+        <va-divider></va-divider>
+        <RideTable :user_to_find="friend.uid" />
+      </span>
     </span>
     <span v-else>
-      <NoDataToDisplay
-        customMessage="Ne postoji korisnik s navedenom email adresom"
-      >
+      <NoDataToDisplay customMessage="No user with e-mail">
       </NoDataToDisplay>
     </span>
   </body>

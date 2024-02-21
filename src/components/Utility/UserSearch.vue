@@ -147,37 +147,37 @@ export default {
   <body class="my_body">
     <h4 class="display-4">
       <va-icon size="large" name="person_search"></va-icon>
-      &nbsp; Pretraži korisnike
+      &nbsp; Find users
     </h4>
     <LoadingBar v-if="!fully_loaded"></LoadingBar>
     <span v-else>
       <span v-if="friends.length > 0">
         <br />
         <div>
-          <va-input style="display: inline-block" placeholder="Unesite pojam za pretragu" v-model="filter" />
+          <va-input style="display: inline-block" placeholder="Search term" v-model="filter" />
           &nbsp;
-          <va-checkbox style="display: inline-block" label="Traži cijelu riječ" v-model="useCustomFilteringFn" />
+          <va-checkbox style="display: inline-block" label="Match whole word" v-model="useCustomFilteringFn" />
         </div>
         <br />
         <div>
           <div style="display: inline-block">
-            <MyCounter :key="perPage" :min_value="1" :max_value="Math.ceil(this.filtered.length)" v-bind:value="perPage"
-              @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Po stranici'">
+            <MyCounter :key="'perPage_' + perPage" :min_value="1" :max_value="Math.min(Math.ceil(this.filtered.length), 10)" v-bind:value="perPage"
+              @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Per page'">
             </MyCounter>
           </div>
           <div style="display: inline-block; margin-left: 10px">
-            <MyCounter :key="currentPage" :min_value="1" :max_value="Math.floor(this.filtered.length / perPage)" v-bind:value="currentPage"
-              @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Stranica'">
+            <MyCounter :key="'currentPage_' + currentPage" :min_value="1" :max_value="Math.ceil(this.filtered.length / perPage)" v-bind:value="currentPage"
+              @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Page'">
             </MyCounter>
           </div>
         </div>
         <br />
         <va-data-table :items="friends" :filter="filter" :columns="columns" :hoverable="true" :per-page="perPage"
           :current-page="currentPage" v-model:sort-by="sortBy" v-model:sorting-order="sortingOrder"
-          @filtered="filtered = $event.items" no-data-filtered-html="Pretraga nije dala rezultate."
-          no-data-html="Nema podataka." :filter-method="customFilteringFn">
-          <template #header(user_display_name)>Korisnik (ime)</template>
-          <template #header(user_email)>Korisnik (email)</template>
+          @filtered="filtered = $event.items" no-data-filtered-html="No results"
+          no-data-html="No data" :filter-method="customFilteringFn">
+          <template #header(user_display_name)>User (name)</template>
+          <template #header(user_email)>User (e-mail)</template>
           <template #header(user_id)></template>
           <template #cell(user_email)="{ source: user_email }">
             <router-link v-bind:to="{ name: 'profile', params: { email: user_email } }">
@@ -189,7 +189,7 @@ export default {
           </template>
         </va-data-table>
       </span>
-      <NoDataToDisplay v-if="friends.length <= 0" customMessage="Nema korisnika">
+      <NoDataToDisplay v-if="friends.length <= 0" customMessage="No users">
       </NoDataToDisplay>
     </span>
   </body>

@@ -41,12 +41,12 @@ export default {
 
 <template>
   <body class="my_body">
-    <h4 class="display-4">Prijava</h4>
+    <h4 class="display-4">Sign in</h4>
     <br />
     <section id="firebaseui-auth-container"></section>
     <br />
     <h4 id="signed_in" visible="false" hidden="true" class="display-4">
-      Već ste prijavljeni
+      Signed in
     </h4>
   </body>
 </template>
