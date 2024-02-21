@@ -1,8 +1,6 @@
 <script>
-import { TwitterAuthProvider, getAuth, onAuthStateChanged } from "firebase/auth";
-import {
-  usersRef
-} from "../../firebase_main.js";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { usersRef } from "../../firebase_main.js";
 import NoDataToDisplay from "./NoDataToDisplay.vue";
 import LoadingBar from "./LoadingBar.vue";
 import MyCounter from "./MyCounter.vue";
@@ -26,13 +24,38 @@ export default {
       }
       return true;
     });
+    let my_activity = this;
+    my_activity.found_me = { email: "", displayName: "", uid: "", admin: false };
+    usersRef
+      .get()
+      .then(function (snapshotUser) {
+        snapshotUser.forEach(function (childSnapshotUser) {
+          let someEmail = childSnapshotUser.get("email");
+          if (my_activity.user && someEmail == my_activity.user.email) {
+            my_activity.found_me = {
+              email: someEmail,
+              displayName: childSnapshotUser.get("displayName"),
+              uid: childSnapshotUser.id,
+              admin: childSnapshotUser.get("admin")
+            };
+          }
+        });
+      })
+      .then(() => {
+        if (my_activity.found_me && !my_activity.found_me.admin) {
+          my_activity.$router.push("/profile/" + my_activity.found_me.email);
+        }
+        if (!my_activity.user) {
+          my_activity.$router.push("/login");
+        }
+      });
   },
   data() {
     return {
       user: null,
+      found_me: { email: "", displayName: "", uid: "", admin: false },
       fully_loaded: false,
       friends: [],
-      status: [],
       selectedItemsEmitted: [],
       new_item: "",
       new_item_tag: "",
@@ -42,21 +65,14 @@ export default {
       useCustomFilteringFn: false,
       filters: [],
       filtered: [],
-      columns: [],
-      sortBy: "score",
-      sortingOrder: "asc",
       perPage: 1,
       currentPage: 1,
       columns: [
         { key: "user_display_name", sortable: true, classes: "data_table_overflow" },
         { key: "user_email", sortable: true, classes: "data_table_overflow" },
+        { key: "user_admin", sortable: true, classes: "data_table_overflow" },
         { key: "user_id", sortable: false, classes: "data_table_overflow" },
-      ],
-      sortingOrderOptions: [
-        { text: "Uzlazno", value: "asc" },
-        { text: "Silazno", value: "desc" },
-        { text: "Bez sortiranja", value: null },
-      ],
+      ]
     };
   },
   methods: {
@@ -69,57 +85,25 @@ export default {
     fetch_users() {
       this.fully_loaded = false;
       this.friends = [];
-      this.status = [];
       let me = this;
       usersRef.get().then(function (snapshotUser) {
         snapshotUser.forEach(function (childSnapshotUser) {
           let user_display_name = childSnapshotUser.get("displayName");
           let user_email = childSnapshotUser.get("email");
+          let user_admin = childSnapshotUser.get("admin");
           let user_id = childSnapshotUser.id;
-          if (!me.user) {
-            me.friends.push({
-              user_display_name: user_display_name,
-              user_email: user_email,
-              user_id: user_id,
-            });
-            me.status.push({
-              user_id: user_id,
-              status: "not_logged_in",
-            });
-          } else {
-            if (!(me.user && me.user.uid == user_id)) {
-              me.friends.push({
-                user_display_name: user_display_name,
-                user_email: user_email,
-                user_id: user_id,
-              });
-              me.status.push({ user_id: user_id, status: "friends" });
-            } else {
-              me.friends.push({
-                user_display_name: user_display_name,
-                user_email: user_email,
-                user_id: user_id,
-              });
-              me.status.push({ user_id: user_id, status: "me" });
-            }
-          }
+          me.friends.push({
+            user_display_name: user_display_name,
+            user_email: user_email,
+            user_admin: user_admin,
+            user_id: user_id
+          });
         });
       }).then(() => {
         this.filtered = this.friends;
         this.perPage = 1;
         this.fully_loaded = true;
       });
-    },
-    getStatus(user_id) {
-      for (let i = 0; i < this.status.length; i++) {
-        if (this.status[i]["user_id"] == user_id) {
-          return this.status[i]["status"];
-        }
-      }
-      return false;
-    },
-    sortByOptions() {
-      return this.columns.map(({ key }) => key);
     },
   },
   created() {
@@ -137,7 +121,7 @@ export default {
   },
   watch: {
     perPage: function () {
-      this.currentPage = 1; 
+      this.currentPage = 1;
     }
   }
 };
@@ -161,29 +145,35 @@ export default {
         <br />
         <div>
           <div style="display: inline-block">
-            <MyCounter :key="'perPage_' + perPage" :min_value="1" :max_value="Math.min(Math.ceil(this.filtered.length), 10)" v-bind:value="perPage"
+            <MyCounter :key="'perPage_' + perPage" :min_value="1"
+              :max_value="Math.min(Math.ceil(this.filtered.length), 10)" v-bind:value="perPage"
               @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Per page'">
             </MyCounter>
           </div>
           <div style="display: inline-block; margin-left: 10px">
-            <MyCounter :key="'currentPage_' + currentPage" :min_value="1" :max_value="Math.ceil(this.filtered.length / perPage)" v-bind:value="currentPage"
+            <MyCounter :key="'currentPage_' + currentPage" :min_value="1"
+              :max_value="Math.ceil(this.filtered.length / perPage)" v-bind:value="currentPage"
               @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Page'">
             </MyCounter>
           </div>
         </div>
         <br />
         <va-data-table :items="friends" :filter="filter" :columns="columns" :hoverable="true" :per-page="perPage"
-          :current-page="currentPage" v-model:sort-by="sortBy" v-model:sorting-order="sortingOrder"
-          @filtered="filtered = $event.items" no-data-filtered-html="No results"
+          :current-page="currentPage" @filtered="filtered = $event.items" no-data-filtered-html="No results"
           no-data-html="No data" :filter-method="customFilteringFn">
           <template #header(user_display_name)>User (name)</template>
           <template #header(user_email)>User (e-mail)</template>
+          <template #header(user_admin)>User status</template>
           <template #header(user_id)></template>
           <template #cell(user_email)="{ source: user_email }">
             <router-link v-bind:to="{ name: 'profile', params: { email: user_email } }">
               <va-button outline :rounded="false" style="border: none"><va-icon name="email"></va-icon> &nbsp;
                 {{ user_email }}</va-button>
             </router-link>
+          </template>
+          <template #cell(user_admin)="{ source: user_admin }">
+            <va-icon size="large" name="star" v-if="user_admin"></va-icon>
+            <va-icon size="large" name="account_box" v-else></va-icon>
           </template>
           <template #cell(user_id)="{ source: user_id }">
           </template>

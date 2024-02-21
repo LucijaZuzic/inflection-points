@@ -4,16 +4,14 @@ import AllData from '../../assets/all_no_data.json'
 import NoDataToDisplay from "./NoDataToDisplay.vue";
 import LoadingBar from "./LoadingBar.vue";
 import MyCounter from "./MyCounter.vue";
-import CombinedRoute from "./CombinedRoute.vue";
 import { ratingsRef } from "../../firebase_main.js";
 export default {
     components: {
         NoDataToDisplay,
         LoadingBar,
         MyCounter,
-        CombinedRoute
     },
-    props: ["user_to_find"],
+    props: ["user_to_find", "is_admin"],
     mounted() {
         const auth = getAuth();
         onAuthStateChanged(auth, (user) => {
@@ -30,12 +28,38 @@ export default {
         });
     },
     data() {
-        this.getRidesVehicles();
+        this.vehicle_ix_array = [];
+        this.vehicle_ix_used = [];
+        for (var i = 0; i < AllData.vehicles.length; i++) {
+            if (AllData.vehicles[i].vehicle < 10) {
+                if (AllData.vehicles[i].rides.length > 0) {
+                    this.vehicle_ix_array.push({ "value": i, "text": AllData.vehicles[i].vehicle });
+                    this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": false });
+                }
+            }
+        }
+        for (var i = 0; i < AllData.vehicles.length; i++) {
+            if (AllData.vehicles[i].vehicle >= 10) {
+                if (AllData.vehicles[i].rides.length > 0) {
+                    this.vehicle_ix_array.push({ "value": i, "text": AllData.vehicles[i].vehicle });
+                    this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": false });
+                }
+            }
+        }
+        this.ride_ix_array = [];
+        for (var i = 0; i < AllData.vehicles.length; i++) {
+            this.ride_ix_array.push([]);
+            for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
+                this.ride_ix_array[this.ride_ix_array.length - 1].push({ "value": j, "text": AllData.vehicles[i].rides[j].ride });
+            }
+        }
         this.only_rated_sizes = [];
         for (var ws_use = 5; ws_use < 25; ws_use += 5) {
-            this.only_rated_sizes.push({ "size": ws_use, "use_size": true });
+            this.only_rated_sizes.push({ "size": ws_use, "use_size": false });
         }
         return {
+            apply_filter: false,
+            apply_user: false,
             only_rated: false,
             vehicles: AllData,
             user: null,
@@ -50,51 +74,17 @@ export default {
             useCustomFilteringFn: false,
             filters: [],
             filtered: [],
-            columns: [],
-            sortBy: "score",
-            sortingOrder: "asc",
             perPage: 1,
             currentPage: 1,
             columns: [
                 { key: "vehicle", sortable: true, classes: "data_table_overflow" },
                 { key: "ride", sortable: true, classes: "data_table_overflow" },
-                { key: "combined", sortable: false, classes: "data_table_overflow" },
-            ],
-            sortingOrderOptions: [
-                { text: "Uzlazno", value: "asc" },
-                { text: "Silazno", value: "desc" },
-                { text: "Bez sortiranja", value: null },
-            ],
+                { key: "ws", sortable: true, classes: "data_table_overflow" },
+                { key: "chosen", sortable: false, classes: "data_table_overflow" },
+            ]
         };
     },
     methods: {
-        getRidesVehicles() {
-            this.vehicle_ix_array = [];
-            this.vehicle_ix_used = [];
-            for (var i = 0; i < AllData.vehicles.length; i++) {
-                if (AllData.vehicles[i].vehicle < 10) {
-                    if (AllData.vehicles[i].rides.length > 0) {
-                        this.vehicle_ix_array.push({ "value": i, "text": AllData.vehicles[i].vehicle });
-                        this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": true });
-                    }
-                }
-            }
-            for (var i = 0; i < AllData.vehicles.length; i++) {
-                if (AllData.vehicles[i].vehicle >= 10) {
-                    if (AllData.vehicles[i].rides.length > 0) {
-                        this.vehicle_ix_array.push({ "value": i, "text": AllData.vehicles[i].vehicle });
-                        this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": true });
-                    }
-                }
-            }
-            this.ride_ix_array = [];
-            for (var i = 0; i < AllData.vehicles.length; i++) {
-                this.ride_ix_array.push([]);
-                for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
-                    this.ride_ix_array[this.ride_ix_array.length - 1].push({ "value": j, "text": AllData.vehicles[i].rides[j].ride });
-                }
-            }
-        },
         filterExact(source) {
             if (this.filter === "") {
                 return true;
@@ -102,49 +92,42 @@ export default {
             return source?.toString?.() === this.filter;
         },
         fetch_rides() {
+            this.rendering_key = !this.rendering_key;
             this.fully_loaded = false;
             this.rides = [];
-            for (var i = 0; i < AllData.vehicles.length; i++) {
-                if (AllData.vehicles[i].vehicle < 10) {
-                    if (this.isUsedVehicle({ "value": i, "text": AllData.vehicles[i].vehicle }) == "danger") {
-                        continue
-                    }
-                    for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
-                        this.rides.push({
-                            vehicle: AllData.vehicles[i].vehicle,
-                            ride: AllData.vehicles[i].rides[j].ride,
-                            combined: AllData.vehicles[i].vehicle.toString() + "_" + AllData.vehicles[i].rides[j].ride.toString()
-                        });
-                    }
-                }
-            }
-            for (var i = 0; i < AllData.vehicles.length; i++) {
-                if (AllData.vehicles[i].vehicle >= 10) {
-                    if (this.isUsedVehicle({ "value": i, "text": AllData.vehicles[i].vehicle }) == "danger") {
-                        continue
-                    }
-                    for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
-                        this.rides.push({
-                            vehicle: AllData.vehicles[i].vehicle,
-                            ride: AllData.vehicles[i].rides[j].ride,
-                            combined: AllData.vehicles[i].vehicle.toString() + "_" + AllData.vehicles[i].rides[j].ride.toString()
-                        });
-                    }
-                }
-            }
-            this.rated_array = [];
             for (var ws_use = 5; ws_use < 25; ws_use += 5) {
+                if (this.isUsedSize(ws_use) == "danger") {
+                    continue;
+                }
                 for (var i = 0; i < AllData.vehicles.length; i++) {
                     if (AllData.vehicles[i].vehicle < 10) {
+                        if (this.isUsedVehicle({ "value": i, "text": AllData.vehicles[i].vehicle }) == "danger") {
+                            continue
+                        }
                         for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
-                            this.rated_array.push({ "string_rated": AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use, "rated_before": false });
+                            this.rides.push({
+                                vehicle: AllData.vehicles[i].vehicle,
+                                ride: AllData.vehicles[i].rides[j].ride,
+                                ws: ws_use,
+                                combined: AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use,
+                                chosen: []
+                            });
                         }
                     }
                 }
                 for (var i = 0; i < AllData.vehicles.length; i++) {
                     if (AllData.vehicles[i].vehicle >= 10) {
+                        if (this.isUsedVehicle({ "value": i, "text": AllData.vehicles[i].vehicle }) == "danger") {
+                            continue
+                        }
                         for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
-                            this.rated_array.push({ "string_rated": AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use, "rated_before": false });
+                            this.rides.push({
+                                vehicle: AllData.vehicles[i].vehicle,
+                                ride: AllData.vehicles[i].rides[j].ride,
+                                ws: ws_use,
+                                combined: AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use,
+                                chosen: []
+                            });
                         }
                     }
                 }
@@ -158,28 +141,28 @@ export default {
                         let rideID = childSnapshotRating.get("ride");
                         let wsID = childSnapshotRating.get("ws");
                         let userID = childSnapshotRating.get("userID");
+                        let chosenID = childSnapshotRating.get("chosen");
                         if (userID == me.$props.user_to_find) {
                             var string_find = vehicleID + "_" + rideID + "_" + wsID;
-                            for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
-                                if (me.rated_array[ix_rated].string_rated == string_find) {
-                                    me.rated_array[ix_rated].rated_before = true;
+                            for (var ix_rated = 0; ix_rated < me.rides.length; ix_rated += 1) {
+                                var string_rated = me.rides[ix_rated].vehicle + "_" + me.rides[ix_rated].ride + "_" + me.rides[ix_rated].ws
+                                if (string_rated == string_find) {
+                                    me.rides[ix_rated].chosen = chosenID;
+                                    break;
                                 }
                             }
                         }
                     });
                 })
                 .then(() => {
+                    this.originalText = this.stringForRow();
                     if (me.only_rated) {
                         let only_rated_rides = [];
-                        for (var ws_use = 5; ws_use < 25; ws_use += 5) {
-                            if (this.isUsedSize(ws_use) == "danger") {
+                        for (var ix_rides = 0; ix_rides < me.rides.length; ix_rides += 1) {
+                            if (me.rides[ix_rides].chosen.length == 0) {
                                 continue
                             }
-                            for (var ix_rides = 0; ix_rides < me.rides.length; ix_rides += 1) {
-                                if (me.getStatus(me.rides[ix_rides].combined + "_" + ws_use)) {
-                                    only_rated_rides.push(me.rides[ix_rides]);
-                                }
-                            }
+                            only_rated_rides.push(me.rides[ix_rides]);
                         }
                         me.rides = only_rated_rides;
                     }
@@ -189,23 +172,14 @@ export default {
                     me.fully_loaded = true;
                 });
         },
-        getStatus(combined_string) {
-            for (var ix_rated = 0; ix_rated < this.rated_array.length; ix_rated += 1) {
-                if (this.rated_array[ix_rated].string_rated == combined_string) {
-                    return this.rated_array[ix_rated].rated_before;
-                }
-            }
-            return false;
-        },
         useSize(some_size) {
             for (var ix_size = 0; ix_size < this.only_rated_sizes.length; ix_size += 1) {
                 if (this.only_rated_sizes[ix_size].size == some_size) {
                     this.only_rated_sizes[ix_size].use_size = !this.only_rated_sizes[ix_size].use_size;
+                    break;
                 }
             }
-            if (this.only_rated) {
-                this.fetch_rides();
-            }
+            this.fetch_rides();
         },
         isUsedSize(some_size) {
             for (var ix_size = 0; ix_size < this.only_rated_sizes.length; ix_size += 1) {
@@ -223,6 +197,7 @@ export default {
             for (var ix_vehicle = 0; ix_vehicle < this.vehicle_ix_used.length; ix_vehicle += 1) {
                 if (this.vehicle_ix_used[ix_vehicle].value == some_vehicle.value && this.vehicle_ix_used[ix_vehicle].text == some_vehicle.text) {
                     this.vehicle_ix_used[ix_vehicle].used = !this.vehicle_ix_used[ix_vehicle].used;
+                    break;
                 }
             }
             this.fetch_rides();
@@ -239,9 +214,31 @@ export default {
             }
             return "danger";
         },
-        sortByOptions() {
-            return this.columns.map(({ key }) => key);
-        }
+        findVehicle(some_vehicle_text) {
+            for (var ix_vehicle = 0; ix_vehicle < this.vehicle_ix_used.length; ix_vehicle += 1) {
+                if (this.vehicle_ix_used[ix_vehicle].text == some_vehicle_text) {
+                    return this.vehicle_ix_used[ix_vehicle]
+                }
+            }
+            return -1;
+        },
+        stringForRow() {
+            var str_row = "vehicle;ride;ws;user;chosen\n";
+            for (var ix_row = 0; ix_row < this.rides.length; ix_row += 1) {
+                var cr = this.rides[ix_row];
+                if (cr.chosen.length > 0) {
+                    str_row += cr.vehicle + ";" + cr.ride + ";" + cr.ws + ";" + this.$props.user_to_find + ";"
+                    for (var ix_chosen = 0; ix_chosen < cr.chosen.length; ix_chosen += 1) {
+                        str_row += cr.chosen[ix_chosen];
+                        if (ix_chosen != cr.chosen.length - 1) {
+                            str_row += ":"
+                        }
+                    }
+                    str_row += "\n" 
+                }
+            }
+            return str_row;
+        },
     },
     created() {
         this.fetch_rides();
@@ -262,74 +259,83 @@ export default {
         },
         only_rated: function () {
             this.fetch_rides();
+        },
+        apply_filter: function () {
+            this.rendering_key = !this.rendering_key;
+        },
+        apply_user: function () {
+            this.rendering_key = !this.rendering_key;
         }
     }
 };
 </script>
 
 <template>
-    <body class="my_body">
-        <h4 class="display-4">
-            <va-icon size="large" name="rule_folder"></va-icon>
-            &nbsp; Find rides
-        </h4>
-        <LoadingBar v-if="!fully_loaded"></LoadingBar>
-        <span v-else>
+    <h4 class="display-4">
+        <va-icon size="large" name="rule_folder"></va-icon>
+        &nbsp; Find rides
+    </h4>
+    <LoadingBar v-if="!fully_loaded"></LoadingBar>
+    <span v-else>
+        <br />
+        <va-card>
             <br />
-            <va-card>
+            <div>
+                <va-checkbox style="display: inline-block" label="Only rated" v-model="only_rated" />
+            </div>
+            <br />
+            <h4>Window size</h4>
+            <br />
+            <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
+                v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
+            </va-button>
+            <br />
+            <va-card-content>
+                <h4>Vehicles</h4>
                 <br />
-                <div>
-                    <va-checkbox style="display: inline-block" label="Only rated" v-model="only_rated" />
-                </div>
-                <br />
-                <h4 v-if="only_rated">Window size</h4>
-                <br v-if="only_rated" />
-                <va-button size="small" v-if="only_rated" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
-                    v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
+                <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
+                    v-for="v in vehicle_ix_array" v-on:click="useVehicle(v)">{{ v.text }}
                 </va-button>
-                <br v-if="only_rated" />
-                <va-card-content>
-                    <h4>Vehicles</h4>
-                    <br />
-                    <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
-                        v-for="v in vehicle_ix_array" v-on:click="useVehicle(v)">{{ v.text }}
-                    </va-button>
-                </va-card-content>
-            </va-card>
-            <br />
-            <span v-if="rides.length > 0">
-                <div>
-                    <div style="display: inline-block">
-                        <MyCounter :key="'perPage_' + perPage" :min_value="1" :max_value="Math.min(Math.ceil(this.filtered.length), 10)"
-                            v-bind:value="perPage" @input="(n) => (perPage = n)" :is_page_size="true"
-                            :some_text="'Per page'">
-                        </MyCounter>
-                    </div>
-                    <div style="display: inline-block; margin-left: 10px">
-                        <MyCounter :key="'currentPage_' + currentPage" :min_value="1" :max_value="Math.ceil(this.filtered.length / perPage)"
-                            v-bind:value="currentPage" @input="(n) => (currentPage = n)" :is_page_number="true"
-                            :some_text="'Page'">
-                        </MyCounter>
-                    </div>
-                </div>
+            </va-card-content>
+        </va-card>
+        <br />
+        <span v-if="rides.length > 0">
+            <span v-if="is_admin">
+                <va-input v-model="originalText" type="textarea" />
                 <br />
-                <va-data-table :items="rides" :filter="filter" :columns="columns" :hoverable="true" :per-page="perPage"
-                    :current-page="currentPage" v-model:sort-by="sortBy" v-model:sorting-order="sortingOrder"
-                    @filtered="filtered = $event.items" no-data-filtered-html="No results"
-                    no-data-html="No data" :filter-method="customFilteringFn">
-                    <template #header(vehicle)>Vehicle</template>
-                    <template #header(ride)>Ride</template>
-                    <template #header(combined)>User rated</template>
-                    <template #cell(combined)="{ source: combined }">
-                        <CombinedRoute v-for="ws_use in only_rated_sizes" :combined_route="combined + '_' + ws_use.size"
-                            :status_route="getStatus(combined + '_' + ws_use.size)" />
-                    </template>
-                </va-data-table>
             </span>
-            <NoDataToDisplay v-if="rides.length <= 0" customMessage="No rides">
-            </NoDataToDisplay>
+            <div>
+                <div style="display: inline-block">
+                    <MyCounter :key="'perPage_' + perPage" :min_value="1"
+                        :max_value="Math.min(Math.ceil(this.filtered.length), 10)" v-bind:value="perPage"
+                        @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Per page'">
+                    </MyCounter>
+                </div>
+                <div style="display: inline-block; margin-left: 10px">
+                    <MyCounter :key="'currentPage_' + currentPage" :min_value="1"
+                        :max_value="Math.ceil(this.filtered.length / perPage)" v-bind:value="currentPage"
+                        @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Page'">
+                    </MyCounter>
+                </div>
+            </div>
+            <br />
+            <va-data-table :items="rides" :filter="filter" :columns="columns" :hoverable="true" :per-page="perPage"
+                :current-page="currentPage" @filtered="filtered = $event.items" no-data-filtered-html="No results"
+                no-data-html="No data" :filter-method="customFilteringFn">
+                <template #header(vehicle)>Vehicle</template>
+                <template #header(ride)>Ride</template>
+                <template #header(ws)>Window size</template>
+                <template #header(chosen)>User rated</template>
+                <template #cell(chosen)="{ source: chosen }">
+                    <va-button outline :rounded="false" style="border: none" v-if="chosen.length > 0" icon="done"
+                        color="success" />
+                    <va-button outline :rounded="false" style="border: none" v-else icon="close" color="danger" />
+                </template>
+            </va-data-table>
         </span>
-    </body>
+        <NoDataToDisplay v-if="rides.length <= 0" customMessage="No rides">
+        </NoDataToDisplay>
+    </span>
 </template>
 
 <style scoped></style>

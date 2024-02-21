@@ -5,10 +5,13 @@ import icon_default from "../../assets/icons/extension_FILL0_wght400_GRAD0_opsz4
 import icon_profile from "../../assets/icons/person_FILL0_wght400_GRAD0_opsz48.png";
 import icon_folder from "../../assets/icons/rule_folder_FILL0_wght400_GRAD0_opsz48.png";
 import icon_search from "../../assets/icons/person_search_FILL0_wght400_GRAD0_opsz48.png"; 
- 
+  
+import { usersRef } from "../../firebase_main.js";
+
 export default {
   data() {
     return {
+      found_me: { email: "", displayName: "", uid: "", admin: false },  
       name_to_icon: {
         profile: icon_profile,  
         search: icon_search,
@@ -36,7 +39,7 @@ export default {
       const auth = getAuth();
       auth.signOut();
       this.$router.push("/login");
-    },
+    }, 
   },
   created() {
     this.$watch(
@@ -64,16 +67,36 @@ export default {
   },
   mounted() {
     const auth = getAuth();
+    let my_activity = this;    
+    my_activity.found_me = { email: "", displayName: "", uid: "", admin: false };
     onAuthStateChanged(auth, (user) => {
       if (user) {
         // User is signed in, see docs for a list of available properties
         // https://firebase.google.com/docs/reference/js/firebase.User
-        this.user = user;
+        my_activity.user = user;
         // ...
       } else {
         // User is signed out
         // ...
       }
+      if (!my_activity.user) {
+        my_activity.$router.push("/login");
+      } 
+      usersRef
+        .get()
+        .then(function (snapshotUser) {
+          snapshotUser.forEach(function (childSnapshotUser) {
+            let someEmail = childSnapshotUser.get("email"); 
+            if (my_activity.user && someEmail == my_activity.user.email) {
+              my_activity.found_me = {
+                email: someEmail,
+                displayName: childSnapshotUser.get("displayName"),
+                uid: childSnapshotUser.id,
+                admin: childSnapshotUser.get("admin")
+              };
+            }
+          });
+        })
       return true;
     });
   },
@@ -107,11 +130,19 @@ export default {
               </span>
             </router-link>
           </va-tab> 
-          <va-tab name="search">
+          <va-tab v-if="found_me != null && found_me.admin" name="search">
             <router-link to="/user-search">
               <span style="color: #ffffff">
                 <va-icon name="person_search" />
                 <span> Find users </span>
+              </span>
+            </router-link>
+          </va-tab>
+          <va-tab v-if="user != null" name="rate"> 
+            <router-link to="/rate/1_4595074_5">
+              <span style="color: #ffffff">
+                <va-icon name="rule_folder" />
+                <span> Rate </span>
               </span>
             </router-link>
           </va-tab>
