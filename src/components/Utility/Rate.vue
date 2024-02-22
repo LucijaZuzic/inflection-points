@@ -227,7 +227,11 @@ export default {
             }
           }
           let my_unrated_shuffled = me.shuffle([...my_unrated]);
-          me.$router.push(my_unrated_shuffled[0]);
+          if (my_unrated_shuffled.length > 0) {
+            me.$router.push(my_unrated_shuffled[0]);
+          } else {
+            me.$router.push("/profile/" + me.user.email);
+          }
         });
     },
     shuffle(array) {
