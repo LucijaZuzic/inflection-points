@@ -5,10 +5,7 @@
       &nbsp; Vehicle {{ vehicle }} Ride {{ ride }} Window size {{ ws }}
     </h4>
     <LoadingBar v-if="!fully_loaded"></LoadingBar>
-    <span v-else>
-      <div> 
-        <va-checkbox style="display: inline-block" label="Find next unrated" v-model="skip_choice" />
-      </div>
+    <span v-else> 
       <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
         :selectable_entry="false" />
       <br />
@@ -22,25 +19,6 @@
         @input="(n) => (calculateSend(index_similar_entry))" />
     </span>
   </body>
-  <va-modal
-    :mobile-fullscreen="false"
-    ref="continue_modal"
-    message="Already rated, go to next?"
-    @ok="$refs.next_modal.show()"
-    stateful
-    ok-text="Yes"
-    cancel-text="No"
-  />
-  <va-modal
-    :mobile-fullscreen="false"
-    ref="next_modal"
-    message="Find unrated?"
-    @ok="findSmallestUnrated()"
-    @cancel="findNext()"
-    stateful
-    ok-text="Yes"
-    cancel-text="No"
-  />
 </template>
 
 <script>
@@ -108,8 +86,7 @@ export default {
     for (var i = 0; i < shuffle_me.length; i++) {
       selected_vals.push({ "entry": shuffle_me[i], "is_selected": false })
     }
-    return {
-      skip_choice: true,
+    return { 
       fully_loaded: false,
       selected_similar: selected_vals,
       similar: similar_get,
@@ -177,12 +154,8 @@ export default {
                 },
                 { merge: true }
               )
-          }
-          if (!me.skip_choice) {
-            me.$refs.continue_modal.show(); 
-          } else {
-            me.findSmallestUnrated();
-          }
+          } 
+            me.findRandomUnrated(); 
         });
     },
     generateArray() {
@@ -216,25 +189,16 @@ export default {
             let userID = childSnapshotRating.get("userID");
             let string_find = vehicleID + "_" + rideID + "_" + wsID; 
             if (me.user && userID == me.user.uid && string_find == me.$route.params.combined) { 
-              me.$refs.continue_modal.show(); 
+              me.findRandomUnrated();
+              return;
             }
           });
         })
         .then(() => {
           this.fully_loaded = true;
         });
-    },
-    findNext() {
-      this.generateArray();
-      let ix_used = 0;
-      for (var ix_rated = 0; ix_rated < this.rated_array.length; ix_rated += 1) {
-        if (this.rated_array[ix_rated].string_rated == this.$route.params.combined && ix_rated != this.rated_array.length - 1) {
-          ix_used = ix_rated + 1;
-        }
-      }
-      this.$router.push("/rate/" + this.rated_array[ix_used].string_rated);
-    },
-    findSmallestUnrated() {
+    }, 
+    findRandomUnrated() {
       let me = this;
       me.generateArray();
       ratingsRef
@@ -256,12 +220,14 @@ export default {
           });
         })
         .then(() => {
+          let my_unrated = [];
           for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
             if (me.rated_array[ix_rated].rated_before == false) {
-              me.$router.push("/rate/" + me.rated_array[ix_rated].string_rated);
-              break;
+              my_unrated.push("/rate/" + me.rated_array[ix_rated].string_rated); 
             }
           }
+          let my_unrated_shuffled = me.shuffle([...my_unrated]);
+          me.$router.push(my_unrated_shuffled[0]);
         });
     },
     shuffle(array) {

@@ -31,7 +31,6 @@ const ui = new firebaseui.auth.AuthUI(firebase.auth());
 // Set up sign-in methods
 const uiConfig = {
   signInOptions: [
-    firebase.auth.EmailAuthProvider.PROVIDER_ID,
     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
   ],
   signInSuccessUrl: ["#/sign-in-success"],
