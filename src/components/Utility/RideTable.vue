@@ -91,6 +91,13 @@ export default {
             }
             return source?.toString?.() === this.filter;
         },
+        getSumChosen(chosenID) {
+            let sum_row = 0;
+            for (var ix_chosen = 0; ix_chosen < chosenID.length; ix_chosen += 1) {
+                sum_row += (parseInt(chosenID[ix_chosen].split("_")[2]) - 1) / 114 - ix_chosen;
+            }
+            return sum_row;
+        },
         fetch_rides() {
             this.rendering_key = !this.rendering_key;
             this.fully_loaded = false;
@@ -133,6 +140,7 @@ export default {
                 }
             }
             let me = this;
+            me.sum_of_table = 0;
             ratingsRef
                 .get()
                 .then(function (snapshotRating) {
@@ -148,6 +156,7 @@ export default {
                                 var string_rated = me.rides[ix_rated].vehicle + "_" + me.rides[ix_rated].ride + "_" + me.rides[ix_rated].ws
                                 if (string_rated == string_find) {
                                     me.rides[ix_rated].chosen = chosenID;
+                                    me.sum_of_table += me.getSumChosen(chosenID);
                                     break;
                                 }
                             }
@@ -343,6 +352,12 @@ export default {
         <br />
         <span v-if="rides.length > 0">
             <span v-if="is_admin">
+                <div>
+                    {{ sum_of_table }} /
+                    {{ rides.length }} =
+                    {{ sum_of_table / rides.length }}
+                </div>
+                <br />
                 <va-input v-model="originalText" type="textarea" />
                 <br />
             </span>
@@ -372,6 +387,9 @@ export default {
                     <va-button outline :rounded="false" style="border: none" v-if="chosen.length > 0" icon="done"
                         color="success" />
                     <va-button outline :rounded="false" style="border: none" v-else icon="close" color="danger" />
+                    <span v-if="is_admin">
+                        &nbsp;{{ getSumChosen(chosen) }}
+                    </span>
                 </template>
             </va-data-table>
         </span>
