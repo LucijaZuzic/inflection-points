@@ -172,6 +172,21 @@ export default {
                     me.fully_loaded = true;
                 });
         },
+        selectAllSizes(status_size) {
+            for (var ix_size = 0; ix_size < this.only_rated_sizes.length; ix_size += 1) {
+                this.only_rated_sizes[ix_size].use_size = status_size;
+            }
+            this.fetch_rides();
+        },
+        useSize(some_size) {
+            for (var ix_size = 0; ix_size < this.only_rated_sizes.length; ix_size += 1) {
+                if (this.only_rated_sizes[ix_size].size == some_size) {
+                    this.only_rated_sizes[ix_size].use_size = !this.only_rated_sizes[ix_size].use_size;
+                    break;
+                }
+            }
+            this.fetch_rides();
+        },
         useSize(some_size) {
             for (var ix_size = 0; ix_size < this.only_rated_sizes.length; ix_size += 1) {
                 if (this.only_rated_sizes[ix_size].size == some_size) {
@@ -192,6 +207,12 @@ export default {
                 }
             }
             return "danger";
+        },
+        selectAllVehicles(status_vehicle) {
+            for (var ix_vehicle = 0; ix_vehicle < this.vehicle_ix_used.length; ix_vehicle += 1) {
+                this.vehicle_ix_used[ix_vehicle].used = status_vehicle;
+            }
+            this.fetch_rides();
         },
         useVehicle(some_vehicle) {
             for (var ix_vehicle = 0; ix_vehicle < this.vehicle_ix_used.length; ix_vehicle += 1) {
@@ -234,7 +255,7 @@ export default {
                             str_row += ":"
                         }
                     }
-                    str_row += "\n" 
+                    str_row += "\n"
                 }
             }
             return str_row;
@@ -284,19 +305,40 @@ export default {
                 <va-checkbox style="display: inline-block" label="Only rated" v-model="only_rated" />
             </div>
             <br />
-            <h4>Window size</h4>
+            <h4>
+                <va-icon name="window"></va-icon>
+                Window size
+            </h4>
             <br />
-            <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
-                v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
-            </va-button>
+            <div>
+                <va-button v-on:click="selectAllSizes(true)" icon="done">All window sizes</va-button>
+                &nbsp;
+                <va-button v-on:click="selectAllSizes(false)" icon="close">No window sizes</va-button>
+            </div>
             <br />
-            <va-card-content>
-                <h4>Vehicles</h4>
-                <br />
+            <div>
+                <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
+                    v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
+                </va-button>
+            </div>
+            <br />
+            <h4>
+                <va-icon name="water"></va-icon>
+                Vehicle
+            </h4>
+            <br />
+            <div>
+                <va-button v-on:click="selectAllVehicles(true)" icon="done">All vehicles</va-button>
+                &nbsp;
+                <va-button v-on:click="selectAllVehicles(false)" icon="close">No vehicles</va-button>
+            </div>
+            <br />
+            <div>
                 <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
                     v-for="v in vehicle_ix_array" v-on:click="useVehicle(v)">{{ v.text }}
                 </va-button>
-            </va-card-content>
+            </div>
+            <br />
         </va-card>
         <br />
         <span v-if="rides.length > 0">
