@@ -139,7 +139,7 @@ export default {
             </router-link>
           </va-tab>
           <va-tab v-if="user != null" name="rate"> 
-            <router-link to="/rate/1_4595074_5">
+            <router-link to="/rate/1_4595074_20">
               <span style="color: #ffffff">
                 <va-icon name="rule_folder" />
                 <span> Rate </span>

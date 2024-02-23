@@ -77,7 +77,8 @@ export default {
     for (var i = 0; i < AllSimilar.compare_to.length; i++) {
       let some_ride = AllSimilar.compare_to[i];
       if (some_ride.vehicle == this.vehicle && some_ride.ride == this.ride) {
-        similar_get = some_ride.similar
+        similar_get = some_ride.similar;
+        break;
       }
     }
     this.file_name = "/public/cleaned_png/" + this.vehicle + "/" + this.ride + "/" + this.vehicle + "_" + this.ride + ".png";
