@@ -160,7 +160,7 @@ export default {
     },
     generateArray() {
       this.rated_array = [];
-      for (var ws_use = 5; ws_use < 25; ws_use += 5) {
+      for (var ws_use = 20; ws_use < 25; ws_use += 5) {
         for (var i = 0; i < AllData.vehicles.length; i++) {
           if (AllData.vehicles[i].vehicle < 10) {
             for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {

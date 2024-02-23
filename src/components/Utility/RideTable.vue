@@ -54,7 +54,7 @@ export default {
             }
         }
         this.only_rated_sizes = [];
-        for (var ws_use = 5; ws_use < 25; ws_use += 5) {
+        for (var ws_use = 20; ws_use < 25; ws_use += 5) {
             this.only_rated_sizes.push({ "size": ws_use, "use_size": false });
         }
         return {
@@ -102,7 +102,7 @@ export default {
             this.rendering_key = !this.rendering_key;
             this.fully_loaded = false;
             this.rides = [];
-            for (var ws_use = 5; ws_use < 25; ws_use += 5) {
+            for (var ws_use = 20; ws_use < 25; ws_use += 5) {
                 if (this.isUsedSize(ws_use) == "danger") {
                     continue;
                 }
