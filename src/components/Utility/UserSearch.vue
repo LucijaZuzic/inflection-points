@@ -25,7 +25,7 @@ export default {
       return true;
     });
     let my_activity = this;
-    my_activity.found_me = { email: "", displayName: "", uid: "", admin: false };
+    my_activity.found_me = { email: "", displayName: "", uid: "", class: -1, admin: false };
     usersRef
       .get()
       .then(function (snapshotUser) {
@@ -36,6 +36,7 @@ export default {
               email: someEmail,
               displayName: childSnapshotUser.get("displayName"),
               uid: childSnapshotUser.id,
+              class: childSnapshotUser.get("class"),
               admin: childSnapshotUser.get("admin")
             };
           }
@@ -53,7 +54,7 @@ export default {
   data() {
     return {
       user: null,
-      found_me: { email: "", displayName: "", uid: "", admin: false },
+      found_me: { email: "", displayName: "", uid: "", class: -1, admin: false },
       fully_loaded: false,
       friends: [],
       selectedItemsEmitted: [],
@@ -71,6 +72,7 @@ export default {
         { key: "user_display_name", sortable: true, classes: "data_table_overflow" },
         { key: "user_email", sortable: true, classes: "data_table_overflow" },
         { key: "user_admin", sortable: true, classes: "data_table_overflow" },
+        { key: "user_class", sortable: true, classes: "data_table_overflow" },
         { key: "user_id", sortable: false, classes: "data_table_overflow" },
       ]
     };
@@ -91,11 +93,13 @@ export default {
           let user_display_name = childSnapshotUser.get("displayName");
           let user_email = childSnapshotUser.get("email");
           let user_admin = childSnapshotUser.get("admin");
+          let user_class = childSnapshotUser.get("class");
           let user_id = childSnapshotUser.id;
           me.friends.push({
             user_display_name: user_display_name,
             user_email: user_email,
             user_admin: user_admin,
+            user_class: user_class,
             user_id: user_id
           });
         });
@@ -164,6 +168,7 @@ export default {
           <template #header(user_display_name)>User (name)</template>
           <template #header(user_email)>User (e-mail)</template>
           <template #header(user_admin)>User status</template>
+          <template #header(user_class)>User class</template>
           <template #header(user_id)></template>
           <template #cell(user_email)="{ source: user_email }">
             <router-link v-bind:to="{ name: 'profile', params: { email: user_email } }">

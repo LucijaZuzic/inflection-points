@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import { usersRef } from "../../firebase_main.js";
 
+import AllData from '../../assets/all_no_data.json';
 import LoadingBar from "../Utility/LoadingBar.vue";
 import RideTable from "../Utility/RideTable.vue";
 
@@ -35,28 +36,55 @@ export default {
       return true;
     });
     let requestedEmail = this.$route.params.email;
-    let someUser = { email: "", displayName: "", uid: "", admin: false };
+    let someUser = { email: "", displayName: "", uid: "", class: -1, admin: false };
     let my_activity = this;
-    my_activity.found_me = { email: "", displayName: "", uid: "", admin: false };
+    my_activity.found_me = { email: "", displayName: "", uid: "", class: -1, admin: false };
+    let noClassUsers = [];
+    let classes_count = [];
+    for (var ws_use = 20; ws_use < 25; ws_use += 5) {
+      for (var i = 0; i < AllData.vehicles.length; i++) {
+        for (var j = 0; j < 2; j++) {
+          classes_count.push({ "count": 0 });
+        }
+      }
+    }
     usersRef
       .get()
       .then(function (snapshotUser) {
         snapshotUser.forEach(function (childSnapshotUser) {
+          let somedisplayName = childSnapshotUser.get("displayName");
+          let someAdmin = childSnapshotUser.get("admin");
           let someEmail = childSnapshotUser.get("email");
+          let someClass = childSnapshotUser.get("class");
+          let someUid = childSnapshotUser.id;
+          if (someClass) {
+            classes_count[someClass - 1].count = classes_count[someClass - 1].count + 1;
+          }
+          if (!someClass) {
+            noClassUsers.push({
+              email: someEmail,
+              displayName: somedisplayName,
+              uid: someUid,
+              class: someClass,
+              admin: someAdmin
+            });
+          }
           if (someEmail == requestedEmail) {
             someUser = {
               email: someEmail,
-              displayName: childSnapshotUser.get("displayName"),
-              uid: childSnapshotUser.id,
-              admin: childSnapshotUser.get("admin")
+              displayName: somedisplayName,
+              uid: someUid,
+              class: someClass,
+              admin: someAdmin
             };
           }
           if (my_activity.user && someEmail == my_activity.user.email) {
             my_activity.found_me = {
               email: someEmail,
-              displayName: childSnapshotUser.get("displayName"),
-              uid: childSnapshotUser.id,
-              admin: childSnapshotUser.get("admin")
+              displayName: somedisplayName,
+              uid: someUid,
+              class: someClass,
+              admin: someAdmin
             };
           }
         });
@@ -69,15 +97,40 @@ export default {
         if (!my_activity.user) {
           my_activity.$router.push("/login");
         }
+        if (noClassUsers.length > 0) {
+          for (var user_ix = 0; user_ix < noClassUsers.length; user_ix += 1) {
+            let ix_least = 0;
+            let least_common_class = classes_count[ix_least];
+            for (var i = 0; i < classes_count.length; i++) {
+              if (classes_count[i].count < least_common_class.count) {
+                ix_least = i;
+                least_common_class = classes_count[i];
+              }
+            }
+            if (noClassUsers[user_ix].uid == my_activity.found_me.uid) {
+              my_activity.found_me.class = ix_least;
+            }
+            noClassUsers[user_ix].class = ix_least;
+            classes_count[ix_least].count = classes_count[ix_least].count + 1;
+            usersRef
+              .doc(noClassUsers[user_ix].uid)
+              .set(
+                {
+                  class: ix_least + 1
+                },
+                { merge: true }
+              )
+          }
+        }
         my_activity.fully_loaded = true;
       });
   },
   data() {
     return {
       fully_loaded: false,
-      found_me: { email: "", displayName: "", uid: "", admin: false },
-      user: { email: "", displayName: "", uid: "", admin: false },
-      friend: { email: "", displayName: "", uid: "", admin: false }
+      found_me: { email: "", displayName: "", uid: "", class: -1, admin: false },
+      user: { email: "", displayName: "", uid: "", class: -1, admin: false },
+      friend: { email: "", displayName: "", uid: "", class: -1, admin: false }
     };
   },
   components: {
@@ -107,7 +160,8 @@ export default {
         <va-icon name="person"></va-icon> &nbsp;
         {{ friend.displayName }} &nbsp;
         <va-icon name="email"></va-icon> &nbsp;
-        {{ friend.email }}
+        {{ friend.email }} &nbsp;
+        <span v-if="found_me.admin"><va-icon name="interests"></va-icon> &nbsp; User class &nbsp; {{ friend.class }} </span>
       </div>
       <va-divider></va-divider>
       <RideTable :user_to_find="friend.uid" :is_admin="found_me.admin" />

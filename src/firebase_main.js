@@ -22,8 +22,8 @@ firebase.initializeApp(firebaseConfig);
 const projectFirestore = firebase.firestore();
 const projectAuth = firebase.auth();
 const projectStorage = firebase.storage();
-const usersRef = projectFirestore.collection("users");   
-const ratingsRef = projectFirestore.collection("ratings");   
+const usersRef = projectFirestore.collection("users");     
+const ratingsRef = projectFirestore.collection("ratings");
 
 // Initialize the FirebaseUI Widget using Firebase.
 const ui = new firebaseui.auth.AuthUI(firebase.auth());

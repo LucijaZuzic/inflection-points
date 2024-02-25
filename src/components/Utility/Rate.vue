@@ -2,14 +2,35 @@
   <body class="my_body">
     <h4 class="display-4">
       <va-icon size="large" name="rule_folder"></va-icon>
-      &nbsp; Vehicle {{ vehicle }} Ride {{ ride }} Window size {{ ws }}
+      &nbsp;
+      Rate
+    </h4>
+    <br />
+    <h4>
+      <va-icon size="large" name="water"></va-icon>
+      &nbsp;
+      Vehicle &nbsp; {{ vehicle }}
+      &nbsp;
+      <va-icon size="large" name="route"></va-icon>
+      &nbsp;
+      Ride &nbsp; {{ ride }}
+      &nbsp;
+      <va-icon size="large" name="window"></va-icon>
+      &nbsp;
+      Window size &nbsp; {{ ws }}
     </h4>
     <LoadingBar v-if="!fully_loaded"></LoadingBar>
-    <span v-else> 
-      <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
-        :selectable_entry="false" />
+    <span v-else>
       <br />
-      <va-button v-on:click="sendData()" :disabled="!can_send || !user">Send</va-button>
+      <div>
+        <va-button v-on:click="sendData()" outline :rounded="false" style="border: none"
+          :disabled="!can_send || !user">Send</va-button>
+      </div>
+      <br />
+      <div>
+        <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
+          :selectable_entry="false" />
+      </div>
       <br />
       <MyImage
         :key="selected_similar[index_similar_entry].entry.vehicle + '_' + selected_similar[index_similar_entry].entry.ride + '_' + selected_similar[index_similar_entry].entry.order + '_' + selected_similar[index_similar_entry].is_selected"
@@ -24,12 +45,12 @@
 <script>
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { ratingsRef } from "../../firebase_main.js";
+import { usersRef, ratingsRef } from "../../firebase_main.js";
 import AllSimilar5 from '../../assets/marker_all_percent_1_5.json';
 import AllSimilar10 from '../../assets/marker_all_percent_1_10.json';
 import AllSimilar15 from '../../assets/marker_all_percent_1_15.json';
 import AllSimilar20 from '../../assets/marker_all_percent_1_20.json';
-import AllData from '../../assets/all_no_data.json'
+import AllData from '../../assets/all_no_data.json';
 import MyImage from './MyImage.vue';
 import LoadingBar from "./LoadingBar.vue";
 
@@ -87,7 +108,7 @@ export default {
     for (var i = 0; i < shuffle_me.length; i++) {
       selected_vals.push({ "entry": shuffle_me[i], "is_selected": false })
     }
-    return { 
+    return {
       fully_loaded: false,
       selected_similar: selected_vals,
       similar: similar_get,
@@ -155,8 +176,8 @@ export default {
                 },
                 { merge: true }
               )
-          } 
-            me.findRandomUnrated(); 
+          }
+          me.findRandomUnrated();
         });
     },
     generateArray() {
@@ -179,61 +200,101 @@ export default {
       }
     },
     amRated() {
-      let me = this; 
-      ratingsRef
-        .get()
-        .then(function (snapshotRating) {
-          snapshotRating.forEach(function (childSnapshotRating) {
-            let vehicleID = childSnapshotRating.get("vehicle");
-            let rideID = childSnapshotRating.get("ride");
-            let wsID = childSnapshotRating.get("ws");
-            let userID = childSnapshotRating.get("userID");
-            let string_find = vehicleID + "_" + rideID + "_" + wsID; 
-            if (me.user && userID == me.user.uid && string_find == me.$route.params.combined) { 
-              me.findRandomUnrated();
-              return;
-            }
-          });
-        })
-        .then(() => {
-          this.fully_loaded = true;
-        });
-    }, 
-    findRandomUnrated() {
       let me = this;
-      me.generateArray();
-      ratingsRef
+      usersRef
         .get()
-        .then(function (snapshotRating) {
-          snapshotRating.forEach(function (childSnapshotRating) {
-            let vehicleID = childSnapshotRating.get("vehicle");
-            let rideID = childSnapshotRating.get("ride");
-            let wsID = childSnapshotRating.get("ws");
-            let userID = childSnapshotRating.get("userID");
-            if (userID == me.user.uid) {
-              var string_find = vehicleID + "_" + rideID + "_" + wsID;
-              for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
-                if (me.rated_array[ix_rated].string_rated == string_find) {
-                  me.rated_array[ix_rated].rated_before = true
-                }
-              }
+        .then(function (snapshotUser) {
+          snapshotUser.forEach(function (childSnapshotUser) {
+            let user_email = childSnapshotUser.get("email");
+            let user_class = childSnapshotUser.get("class");
+            if (user_email == me.user.email) {
+              me.user_class = user_class;
             }
-          });
-        })
-        .then(() => {
-          let my_unrated = [];
-          for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
-            if (me.rated_array[ix_rated].rated_before == false) {
-              my_unrated.push("/rate/" + me.rated_array[ix_rated].string_rated); 
-            }
-          }
-          let my_unrated_shuffled = me.shuffle([...my_unrated]);
-          if (my_unrated_shuffled.length > 0) {
-            me.$router.push(my_unrated_shuffled[0]);
+          })
+        }).then(() => {
+          if (me.user_class) {
+            ratingsRef
+              .get()
+              .then(function (snapshotRating) {
+                snapshotRating.forEach(function (childSnapshotRating) {
+                  let vehicleID = childSnapshotRating.get("vehicle");
+                  let rideID = childSnapshotRating.get("ride");
+                  let wsID = childSnapshotRating.get("ws");
+                  let userID = childSnapshotRating.get("userID");
+                  let string_find = vehicleID + "_" + rideID + "_" + wsID;
+                  if (me.user && userID == me.user.uid && string_find == me.$route.params.combined) {
+                    me.findRandomUnrated();
+                    return;
+                  }
+                });
+              })
+              .then(() => {
+                this.fully_loaded = true;
+              })
           } else {
             me.$router.push("/profile/" + me.user.email);
           }
-        });
+        })
+    },
+    findRandomUnrated() {
+      let me = this;
+      me.generateArray();
+      usersRef
+        .get()
+        .then(function (snapshotUser) {
+          snapshotUser.forEach(function (childSnapshotUser) {
+            let user_email = childSnapshotUser.get("email");
+            let user_class = childSnapshotUser.get("class");
+            if (user_email == me.user.email) {
+              me.user_class = user_class;
+            }
+          })
+        }).then(() => {
+          if (me.user_class) {
+            ratingsRef
+              .get()
+              .then(function (snapshotRating) {
+                snapshotRating.forEach(function (childSnapshotRating) {
+                  let vehicleID = childSnapshotRating.get("vehicle");
+                  let rideID = childSnapshotRating.get("ride");
+                  let wsID = childSnapshotRating.get("ws");
+                  let userID = childSnapshotRating.get("userID");
+                  if (userID == me.user.uid) {
+                    var string_find = vehicleID + "_" + rideID + "_" + wsID;
+                    for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
+                      if (me.rated_array[ix_rated].string_rated == string_find) {
+                        me.rated_array[ix_rated].rated_before = true
+                      }
+                    }
+                  }
+                });
+              })
+              .then(() => {
+                let found_a_url = false;
+                for (var i = me.user_class - 1; i < me.rated_array.length; i++) {
+                  if (me.rated_array[i].rated_before == false) {
+                    me.$router.push("/rate/" + me.rated_array[i].string_rated);
+                    found_a_url = true;
+                    break;
+                  }
+                }
+                if (!found_a_url) {
+                  for (var i = 0; i < me.user_class - 1; i++) {
+                    if (me.rated_array[i].rated_before == false) {
+                      me.$router.push("/rate/" + me.rated_array[i].string_rated);
+                      found_a_url = true;
+                      break;
+                    }
+                  }
+                }
+                if (!found_a_url) {
+                  me.$router.push("/profile/" + me.user.email);
+                }
+              });
+          } else {
+            me.$router.push("/profile/" + me.user.email);
+          }
+        })
     },
     shuffle(array) {
       let currentIndex = array.length, randomIndex;
@@ -253,5 +314,5 @@ export default {
       return array;
     }
   }
-} 
+}  
 </script>
