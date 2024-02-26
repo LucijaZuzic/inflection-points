@@ -5,7 +5,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import { usersRef } from "../../firebase_main.js";
 
-import AllData from '../../assets/all_no_data.json';
+import AllData from '../../assets/all_no_data_short.json';
 import LoadingBar from "../Utility/LoadingBar.vue";
 import RideTable from "../Utility/RideTable.vue";
 
@@ -43,7 +43,7 @@ export default {
     let classes_count = [];
     for (var ws_use = 20; ws_use < 25; ws_use += 5) {
       for (var i = 0; i < AllData.vehicles.length; i++) {
-        for (var j = 0; j < 2; j++) {
+        for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
           classes_count.push({ "count": 0 });
         }
       }

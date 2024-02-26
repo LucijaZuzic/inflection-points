@@ -50,7 +50,7 @@ import AllSimilar5 from '../../assets/marker_all_percent_1_5.json';
 import AllSimilar10 from '../../assets/marker_all_percent_1_10.json';
 import AllSimilar15 from '../../assets/marker_all_percent_1_15.json';
 import AllSimilar20 from '../../assets/marker_all_percent_1_20.json';
-import AllData from '../../assets/all_no_data.json';
+import AllData from '../../assets/all_no_data_short.json';
 import MyImage from './MyImage.vue';
 import LoadingBar from "./LoadingBar.vue";
 

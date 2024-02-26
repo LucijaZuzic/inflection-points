@@ -1,6 +1,6 @@
 <script>
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import AllData from '../../assets/all_no_data.json'
+import AllData from '../../assets/all_no_data_short.json'
 import NoDataToDisplay from "./NoDataToDisplay.vue";
 import LoadingBar from "./LoadingBar.vue";
 import MyCounter from "./MyCounter.vue";
@@ -119,7 +119,7 @@ export default {
             columns: [
                 { key: "vehicle", sortable: true, classes: "data_table_overflow" },
                 { key: "ride", sortable: true, classes: "data_table_overflow" },
-                { key: "ws", sortable: true, classes: "data_table_overflow" }, 
+                { key: "ws", sortable: true, classes: "data_table_overflow" },
                 { key: "combined", sortable: false, classes: "data_table_overflow" }
             ]
         };
@@ -207,26 +207,32 @@ export default {
                 }
             }
             scores = [...scores].sort((a, b) => a - b);
-            let best = "";
+            let best = [];
             for (var ix_rated = 0; ix_rated < this.rides.length; ix_rated += 1) {
                 if (this.rides[ix_rated].combined.other.length > 0) {
                     var sum_diff = this.getSumChosen(this.rides[ix_rated].combined.other);
+                    var euclid_diff = this.getSumChosenEuclid(this.rides[ix_rated].combined);
                     if (sum_diff.sum_row == scores[0]) {
-                        if (best != "") {
-                            best += " ";
-                        }
-                        best += "Vehicle " + this.rides[ix_rated].vehicle + " Ride " + this.rides[ix_rated].ride + " Score " + sum_diff.sum_row;
+                        best.push({
+                            "vehicle": this.rides[ix_rated].vehicle,
+                            "ride ": this.rides[ix_rated].ride,
+                            "score": sum_diff,
+                            "euclid_score": euclid_diff
+                        })
                     }
                 }
             }
             for (var ix_rated = 0; ix_rated < this.rides.length; ix_rated += 1) {
                 if (this.rides[ix_rated].combined.other.length > 0) {
                     var sum_diff = this.getSumChosen(this.rides[ix_rated].combined.other);
+                    var euclid_diff = this.getSumChosenEuclid(this.rides[ix_rated].combined);
                     if (sum_diff.sum_row == scores[1]) {
-                        if (best != "") {
-                            best += " ";
-                        }
-                        best += "Vehicle " + this.rides[ix_rated].vehicle + " Ride " + this.rides[ix_rated].ride + " Score " + sum_diff.sum_row;
+                        best.push({
+                            "vehicle": this.rides[ix_rated].vehicle,
+                            "ride ": this.rides[ix_rated].ride,
+                            "score": sum_diff,
+                            "euclid_score": euclid_diff
+                        })
                     }
                 }
             }
@@ -364,7 +370,7 @@ export default {
                             this.rides.push({
                                 vehicle: AllData.vehicles[i].vehicle,
                                 ride: AllData.vehicles[i].rides[j].ride,
-                                ws: ws_use, 
+                                ws: ws_use,
                                 combined: { "original": AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use, "other": [] }
                             });
                         }
@@ -382,7 +388,7 @@ export default {
                             this.rides.push({
                                 vehicle: AllData.vehicles[i].vehicle,
                                 ride: AllData.vehicles[i].rides[j].ride,
-                                ws: ws_use, 
+                                ws: ws_use,
                                 combined: { "original": AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use, "other": [] }
                             });
                         }
@@ -408,18 +414,36 @@ export default {
                         if (userID == me.$props.user_to_find) {
                             var string_find = vehicleID + "_" + rideID + "_" + wsID;
                             for (var ix_rated = 0; ix_rated < me.rides.length; ix_rated += 1) {
-                                var string_rated = me.rides[ix_rated].vehicle + "_" + me.rides[ix_rated].ride + "_" + me.rides[ix_rated].ws
+                                var string_rated = me.rides[ix_rated].vehicle + "_" + me.rides[ix_rated].ride + "_" + me.rides[ix_rated].ws;
                                 if (string_rated == string_find) {
-                                    me.rides[ix_rated].combined.other = chosenID;
-                                    var sum_diff = me.getSumChosen(chosenID); 
-                                    me.sum_of_table += sum_diff.sum_row;
-                                    me.num_correct += sum_diff.correct_chosen;
-                                    me.num_one += sum_diff.one_chosen;
+                                    var sum_diff = me.getSumChosen(chosenID);
                                     var euclid_diff = me.getSumChosenEuclid({ "original": string_rated, "other": chosenID });
-                                    me.sum_of_table_euclid += euclid_diff.diff;
-                                    me.sum_of_table_euclid_percent += euclid_diff.diff_percent;
-                                    me.count_rated += 1;
-                                    break;
+                                    if (!me.rides[ix_rated].combined.other.length > 0) {
+                                        me.rides[ix_rated].combined.other = chosenID;
+                                        me.sum_of_table += sum_diff.sum_row;
+                                        me.num_correct += sum_diff.correct_chosen;
+                                        me.num_one += sum_diff.one_chosen;
+                                        me.sum_of_table_euclid += euclid_diff.diff;
+                                        me.sum_of_table_euclid_percent += euclid_diff.diff_percent;
+                                        me.count_rated += 1;
+                                        break;
+                                    } else {
+                                        var sum_diff_already = me.getSumChosen(me.rides[ix_rated].combined.other);
+                                        var euclid_diff_already = me.getSumChosenEuclid(me.rides[ix_rated].combined);
+                                        if (sum_diff.sum_row < sum_diff_already.sum_row) {
+                                            me.rides[ix_rated].combined.other = chosenID;
+                                            me.sum_of_table -= sum_diff_already.sum_row;
+                                            me.sum_of_table += sum_diff.sum_row;
+                                            me.num_correct -= sum_diff_already.correct_chosen;
+                                            me.num_correct += sum_diff.correct_chosen;
+                                            me.num_one -= sum_diff_already.one_chosen;
+                                            me.num_one += sum_diff.one_chosen;
+                                            me.sum_of_table_euclid -= euclid_diff_already.diff;
+                                            me.sum_of_table_euclid += euclid_diff.diff;
+                                            me.sum_of_table_euclid_percent -= euclid_diff_already.diff_percent;
+                                            me.sum_of_table_euclid_percent += euclid_diff.diff_percent;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -705,7 +729,8 @@ export default {
             </div>
         </span>
         <span v-if="rides.length > 0">
-            <span v-if="is_admin && count_rated"> 
+            <span v-if="is_admin && count_rated">
+                {{ getBestScoreInTable() }}
                 <div>
                     <b>Rank: &nbsp;</b>
                     {{ sum_of_table }} /
@@ -822,7 +847,7 @@ export default {
                 no-data-html="No data" :filter-method="customFilteringFn">
                 <template #header(vehicle)>Vehicle</template>
                 <template #header(ride)>Ride</template>
-                <template #header(ws)>Window size</template> 
+                <template #header(ws)>Window size</template>
                 <template #header(combined)><span v-if="is_admin">Score</span></template>
                 <template #cell(combined)="{ source: combined }">
                     <div>
