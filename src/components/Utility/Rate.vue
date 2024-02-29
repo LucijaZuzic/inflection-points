@@ -108,7 +108,7 @@ export default {
       selected_vals.push({ "entry": shuffle_me[i], "is_selected": false })
     }
     return {
-      fully_loaded: false,
+      fully_loaded: true,
       selected_similar: selected_vals,
       similar: similar_get,
       similar_shuffled: shuffle_me,
@@ -163,6 +163,9 @@ export default {
             ratingsRef
               .doc(me.found_data)
               .set({ chosen: me.selected_list }, { merge: true })
+              .then(() => {
+                me.findNextUnrated();
+              })
           } else {
             ratingsRef
               .add(
@@ -175,8 +178,11 @@ export default {
                 },
                 { merge: true }
               )
+              .then(() => {
+                me.findNextUnrated();
+              })
           }
-          me.findNextUnrated();
+
         });
     },
     generateArray() {

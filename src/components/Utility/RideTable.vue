@@ -189,55 +189,6 @@ export default {
             );
 
         },
-        getBestScoreInTable() {
-            let scores = [];
-            for (var ix_rated = 0; ix_rated < this.rides.length; ix_rated += 1) {
-                if (this.rides[ix_rated].combined.other.length > 0) {
-                    var sum_diff = this.getSumChosen(this.rides[ix_rated].combined.other);
-                    let seen_score = false;
-                    for (var ix_score = 0; ix_score < scores.length; ix_score += 1) {
-                        if (scores[ix_score] == sum_diff.sum_row) {
-                            seen_score = true;
-                            break;
-                        }
-                    }
-                    if (!seen_score) {
-                        scores.push(sum_diff.sum_row);
-                    }
-                }
-            }
-            scores = [...scores].sort((a, b) => a - b);
-            let best = [];
-            for (var ix_rated = 0; ix_rated < this.rides.length; ix_rated += 1) {
-                if (this.rides[ix_rated].combined.other.length > 0) {
-                    var sum_diff = this.getSumChosen(this.rides[ix_rated].combined.other);
-                    var euclid_diff = this.getSumChosenEuclid(this.rides[ix_rated].combined);
-                    if (sum_diff.sum_row == scores[0]) {
-                        best.push({
-                            "vehicle": this.rides[ix_rated].vehicle,
-                            "ride ": this.rides[ix_rated].ride,
-                            "score": sum_diff,
-                            "euclid_score": euclid_diff
-                        })
-                    }
-                }
-            }
-            for (var ix_rated = 0; ix_rated < this.rides.length; ix_rated += 1) {
-                if (this.rides[ix_rated].combined.other.length > 0) {
-                    var sum_diff = this.getSumChosen(this.rides[ix_rated].combined.other);
-                    var euclid_diff = this.getSumChosenEuclid(this.rides[ix_rated].combined);
-                    if (sum_diff.sum_row == scores[1]) {
-                        best.push({
-                            "vehicle": this.rides[ix_rated].vehicle,
-                            "ride ": this.rides[ix_rated].ride,
-                            "score": sum_diff,
-                            "euclid_score": euclid_diff
-                        })
-                    }
-                }
-            }
-            return best;
-        },
         getMaxMinEuclid() {
             this.euclid_ranges = [];
             this.avg_euclid_range = 0;
@@ -730,7 +681,6 @@ export default {
         </span>
         <span v-if="rides.length > 0">
             <span v-if="is_admin && count_rated">
-                {{ getBestScoreInTable() }}
                 <div>
                     <b>Rank: &nbsp;</b>
                     {{ sum_of_table }} /
@@ -805,12 +755,12 @@ export default {
                 </div>
                 <div>
                     <b>Euclidean (min - max): &nbsp;</b>
-                    {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }} =
-                    {{ Math.round((min_euclid_last - max_euclid_first) * 100) / 100 }}
+                    | {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }} | =
+                    {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }}
                     &nbsp;
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round((min_euclid_last -
+                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(Math.abs(min_euclid_last -
                         max_euclid_first) * 100) / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / (min_euclid_last - max_euclid_first) * 10000) / 100 }}
+                    {{ Math.round(sum_of_table_euclid / count_rated / Math.abs(min_euclid_last - max_euclid_first) * 10000) / 100 }}
                     %
                 </div>
                 <div>
@@ -850,93 +800,95 @@ export default {
                 <template #header(ws)>Window size</template>
                 <template #header(combined)><span v-if="is_admin">Score</span></template>
                 <template #cell(combined)="{ source: combined }">
-                    <div>
-                        <b>Rank: &nbsp;</b>
-                        {{ getSumChosen(combined.other).sum_row }} / 75 =
-                        {{ Math.round(getSumChosen(combined.other).sum_row / 75 * 100) / 100 }} %
-                    </div>
-                    <div>
-                        <b>First quartile: &nbsp;</b>
-                        {{ getSumChosen(combined.other).correct_chosen }} / 5 =
-                        {{ Math.round(getSumChosen(combined.other).correct_chosen / 5 * 10000) / 100 }} %
-                    </div>
-                    <div>
-                        <b>Most similar: &nbsp;</b>
-                        <va-icon name="done" v-if="getSumChosen(combined.other).one_chosen"></va-icon>
-                        <va-icon name="close" v-else></va-icon>
-                    </div>
-                    <div>
-                        <b>Euclidean: &nbsp;</b>
-                        {{ Math.round(getSumChosenEuclid(combined).chosen_sum * 100) / 100 }} - {{
-                            Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }}
-                        &nbsp;
-                        {{ Math.round(getSumChosenEuclid(combined).last_five * 100) / 100 }} - {{
-                            Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }}
-                    </div>
-                    <div>
-                        <b>Euclidean (percent): &nbsp;</b>
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff_percent * 100) / 100 }} %
-                    </div>
-                    <div>
-                        <b>Euclidean (average): &nbsp;</b>
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round(avg_euclid_range * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff / avg_euclid_range * 10000) / 100 }} %
-                    </div>
-                    <div>
-                        <b>Euclidean (median): &nbsp;</b>
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round(median_euclid_range * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff / median_euclid_range * 10000) / 100 }} %
-                    </div>
-                    <div>
-                        <b>Euclidean (max): &nbsp;</b>
-                        {{ Math.round(max_euclid_range_last * 100) / 100 }} - {{ Math.round(max_euclid_range_first *
-                            100) /
-                            100 }} =
-                        {{ Math.round(max_euclid_range * 100) / 100 }}
-                        &nbsp;
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round(max_euclid_range * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff / max_euclid_range * 10000) / 100 }} %
-                    </div>
-                    <div>
-                        <b>Euclidean (min): &nbsp;</b>
-                        {{ Math.round(min_euclid_range_last * 100) / 100 }} - {{ Math.round(min_euclid_range_first *
-                            100) /
-                            100 }} =
-                        {{ Math.round(min_euclid_range * 100) / 100 }}
-                        &nbsp;
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round(min_euclid_range * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff / min_euclid_range * 10000) / 100 }} %
-                    </div>
-                    <div>
-                        <b>Euclidean (min - max): &nbsp;</b>
-                        {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }} =
-                        {{ Math.round((min_euclid_last - max_euclid_first) * 100) / 100 }}
-                        &nbsp;
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round((min_euclid_last - max_euclid_first) * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff / (min_euclid_last - max_euclid_first) * 10000)
-                            /
-                            100 }} %
-                    </div>
-                    <div>
-                        <b>Euclidean (max - min): &nbsp;</b>
-                        {{ Math.round(max_euclid_last * 100) / 100 }} - {{ Math.round(min_euclid_first * 100) / 100 }} =
-                        {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }}
-                        &nbsp;
-                        {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                        {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }} =
-                        {{ Math.round(getSumChosenEuclid(combined).diff / (max_euclid_last - min_euclid_first) * 10000)
-                            /
-                            100 }} %
-                    </div>
+                    <span v-if="combined.other.length">
+                        <div>
+                            <b>Rank: &nbsp;</b>
+                            {{ getSumChosen(combined.other).sum_row }} / 75 =
+                            {{ Math.round(getSumChosen(combined.other).sum_row / 75 * 100) / 100 }} %
+                        </div>
+                        <div>
+                            <b>First quartile: &nbsp;</b>
+                            {{ getSumChosen(combined.other).correct_chosen }} / 5 =
+                            {{ Math.round(getSumChosen(combined.other).correct_chosen / 5 * 10000) / 100 }} %
+                        </div>
+                        <div>
+                            <b>Most similar: &nbsp;</b>
+                            <va-icon name="done" v-if="getSumChosen(combined.other).one_chosen"></va-icon>
+                            <va-icon name="close" v-else></va-icon>
+                        </div>
+                        <div>
+                            <b>Euclidean: &nbsp;</b>
+                            {{ Math.round(getSumChosenEuclid(combined).chosen_sum * 100) / 100 }} - {{
+                                Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }}
+                            &nbsp;
+                            {{ Math.round(getSumChosenEuclid(combined).last_five * 100) / 100 }} - {{
+                                Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }}
+                        </div>
+                        <div>
+                            <b>Euclidean (percent): &nbsp;</b>
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff_percent * 100) / 100 }} %
+                        </div>
+                        <div>
+                            <b>Euclidean (average): &nbsp;</b>
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round(avg_euclid_range * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff / avg_euclid_range * 10000) / 100 }} %
+                        </div>
+                        <div>
+                            <b>Euclidean (median): &nbsp;</b>
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round(median_euclid_range * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff / median_euclid_range * 10000) / 100 }} %
+                        </div>
+                        <div>
+                            <b>Euclidean (max): &nbsp;</b>
+                            {{ Math.round(max_euclid_range_last * 100) / 100 }} - {{ Math.round(max_euclid_range_first *
+                                100) /
+                                100 }} =
+                            {{ Math.round(max_euclid_range * 100) / 100 }}
+                            &nbsp;
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round(max_euclid_range * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff / max_euclid_range * 10000) / 100 }} %
+                        </div>
+                        <div>
+                            <b>Euclidean (min): &nbsp;</b>
+                            {{ Math.round(min_euclid_range_last * 100) / 100 }} - {{ Math.round(min_euclid_range_first *
+                                100) /
+                                100 }} =
+                            {{ Math.round(min_euclid_range * 100) / 100 }}
+                            &nbsp;
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round(min_euclid_range * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff / min_euclid_range * 10000) / 100 }} %
+                        </div>
+                        <div>
+                            <b>Euclidean (min - max): &nbsp;</b>
+                            | {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }} | =
+                            {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }}
+                            &nbsp;
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff / Math.abs(min_euclid_last - max_euclid_first) * 10000)
+                                /
+                                100 }} %
+                        </div>
+                        <div>
+                            <b>Euclidean (max - min): &nbsp;</b>
+                            {{ Math.round(max_euclid_last * 100) / 100 }} - {{ Math.round(min_euclid_first * 100) / 100 }} =
+                            {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }}
+                            &nbsp;
+                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                            {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }} =
+                            {{ Math.round(getSumChosenEuclid(combined).diff / (max_euclid_last - min_euclid_first) * 10000)
+                                /
+                                100 }} %
+                        </div>
+                    </span>
                 </template>
             </va-data-table>
         </span>
