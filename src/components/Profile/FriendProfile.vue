@@ -163,8 +163,8 @@ export default {
         {{ friend.email }} &nbsp;
         <span v-if="found_me.admin"><va-icon name="interests"></va-icon> &nbsp; User class &nbsp; {{ friend.class }} </span>
       </div>
-      <va-divider></va-divider>
-      <RideTable :user_to_find="friend.uid" :is_admin="found_me.admin" />
+      <va-divider v-if="found_me.admin"></va-divider>
+      <RideTable v-if="found_me.admin" :user_to_find="friend.uid" :is_admin="found_me.admin" />
     </span>
     <span v-else>
       <NoDataToDisplay customMessage="User not found">

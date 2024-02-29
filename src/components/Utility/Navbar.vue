@@ -78,65 +78,31 @@ export default {
         }
       }
     },
-    findRandomUnrated() {
+    findNextUnrated() {
       let me = this;
       me.generateArray();
-      usersRef
-        .get()
-        .then(function (snapshotUser) {
-          snapshotUser.forEach(function (childSnapshotUser) {
-            let user_email = childSnapshotUser.get("email");
-            let user_class = childSnapshotUser.get("class");
-            if (user_email == me.user.email) {
-              me.user_class = user_class;
+      if (me.user) {
+        usersRef
+          .get()
+          .then(function (snapshotUser) {
+            snapshotUser.forEach(function (childSnapshotUser) {
+              let user_email = childSnapshotUser.get("email");
+              let user_class = childSnapshotUser.get("class");
+              if (user_email == me.user.email) {
+                me.user_class = user_class;
+              }
+            })
+          }).then(() => {
+            if (me.user_class) {
+              me.$router.push("/rate/" + me.rated_array[me.user_class - 1].string_rated);
+            } else {
+              me.$router.push("/profile/" + me.user.email);
             }
           })
-        }).then(() => {
-          if (me.user_class) {
-            ratingsRef
-              .get()
-              .then(function (snapshotRating) {
-                snapshotRating.forEach(function (childSnapshotRating) {
-                  let vehicleID = childSnapshotRating.get("vehicle");
-                  let rideID = childSnapshotRating.get("ride");
-                  let wsID = childSnapshotRating.get("ws");
-                  let userID = childSnapshotRating.get("userID");
-                  if (userID == me.user.uid) {
-                    var string_find = vehicleID + "_" + rideID + "_" + wsID;
-                    for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
-                      if (me.rated_array[ix_rated].string_rated == string_find) {
-                        me.rated_array[ix_rated].rated_before = true
-                      }
-                    }
-                  }
-                });
-              })
-              .then(() => {
-                let found_a_url = false;
-                for (var i = me.user_class - 1; i < me.rated_array.length; i++) {
-                  if (me.rated_array[i].rated_before == false) {
-                    me.$router.push("/rate/" + me.rated_array[i].string_rated);
-                    found_a_url = true;
-                    break;
-                  }
-                }
-                if (!found_a_url) {
-                  for (var i = 0; i < me.user_class - 1; i++) {
-                    if (me.rated_array[i].rated_before == false) {
-                      me.$router.push("/rate/" + me.rated_array[i].string_rated);
-                      found_a_url = true;
-                      break;
-                    }
-                  }
-                }
-                if (!found_a_url) {
-                  me.$router.push("/profile/" + me.user.email);
-                }
-              });
-          } else {
-            me.$router.push("/profile/" + me.user.email);
-          }
-        })
+
+      } else {
+        me.$router.push("/login");
+      }
     }
   },
   created() {
@@ -237,7 +203,7 @@ export default {
             </router-link>
           </va-tab>
           <va-tab v-if="user != null" name="rate">
-            <span style="color: #ffffff" v-on:click="findRandomUnrated()">
+            <span style="color: #ffffff" v-on:click="findNextUnrated()">
               <va-icon name="rule_folder" />
               <span> Rate </span>
             </span>
