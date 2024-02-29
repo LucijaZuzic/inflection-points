@@ -99,7 +99,6 @@ export default {
               me.$router.push("/profile/" + me.user.email);
             }
           })
-
       } else {
         me.$router.push("/login");
       }
