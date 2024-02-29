@@ -79,7 +79,7 @@ export default {
       }
     },
     balancedLatinSquare(array, participantId) {
-      result = [];
+      var result = [];
       // Based on "Bradley, J. V. Complete counterbalancing of immediate sequential effects in a Latin square design. J. Amer. Statist. Ass.,.1958, 53, 525-528. "
       for (var i = 0, j = 0, h = 0; i < array.length; ++i) {
         var val = 0;
@@ -120,7 +120,7 @@ export default {
               for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
                 url_array.push("/rate/" + me.rated_array[ix_rated].string_rated);
               }
-              url_array = sorted([... url_array]);
+              url_array = [...url_array].sort((a, b) => a - b);
               var bls = me.balancedLatinSquare(url_array, me.user_class - 1);
               me.$router.push(bls[0]);
             } else {
