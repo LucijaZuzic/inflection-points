@@ -204,6 +204,28 @@ export default {
         }
       }
     },
+    balancedLatinSquare(array, participantId) {
+      result = [];
+      // Based on "Bradley, J. V. Complete counterbalancing of immediate sequential effects in a Latin square design. J. Amer. Statist. Ass.,.1958, 53, 525-528. "
+      for (var i = 0, j = 0, h = 0; i < array.length; ++i) {
+        var val = 0;
+        if (i < 2 || i % 2 != 0) {
+          val = j++;
+        } else {
+          val = array.length - h - 1;
+          ++h;
+        }
+
+        var idx = (val + participantId) % array.length;
+        result.push(array[idx]);
+      }
+
+      if (array.length % 2 != 0 && participantId % 2 != 0) {
+        result = result.reverse();
+      }
+
+      return result;
+    },
     findNextUnrated() {
       let me = this;
       me.generateArray();
@@ -220,20 +242,27 @@ export default {
             })
           }).then(() => {
             if (me.user_class) {
-              var string_find = me.vehicle + "_" + me.ride + "_" + me.ws;
-              var next_ix = 0;
+              var url_array = [];
               for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
-                if (me.rated_array[ix_rated].string_rated == string_find) {
+                url_array.push("/rate/" + me.rated_array[ix_rated].string_rated);
+              }
+              url_array = sorted([... url_array]);
+              var bls = me.balancedLatinSquare(url_array, me.user_class - 1);
+              var string_find = "/rate/" + me.vehicle + "_" + me.ride + "_" + me.ws;
+              var next_ix = 0;
+              for (var ix_rated = 0; ix_rated < bls.length; ix_rated += 1) {
+                if (bls[ix_rated] == string_find) {
                   next_ix = ix_rated + 1;
-                  if (next_ix == me.rated_array.length) {
+                  if (next_ix == bls.length) {
                     next_ix = 0;
                   }
+                  break;
                 }
               }
-              if (next_ix == me.user_class - 1) {
+              if (next_ix == 0) {
                 me.$router.push("/profile/" + me.user.email);
               } else {
-                me.$router.push("/rate/" + me.rated_array[next_ix].string_rated);
+                me.$router.push(bls[next_ix]);
               }
             } else {
               me.$router.push("/profile/" + me.user.email);
