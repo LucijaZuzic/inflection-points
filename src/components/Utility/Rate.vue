@@ -22,6 +22,12 @@
     <LoadingBar v-if="!fully_loaded"></LoadingBar>
     <span v-else>
       <br />
+      <h4>
+        <va-icon size="large" name="pending"></va-icon>
+        &nbsp;
+        Progress &nbsp; {{ my_index }} / {{ rated_array.length }}
+      </h4>
+      <br />
       <div>
         <va-button v-on:click="sendData()" outline :rounded="false" style="border: none"
           :disabled="!can_send || !user">Send</va-button>
@@ -73,6 +79,8 @@ export default {
       }
       if (!this.user) {
         this.$router.push("/login");
+      } else { 
+        this.getIndex();
       }
       return true;
     });
@@ -106,9 +114,10 @@ export default {
     var selected_vals = [];
     for (var i = 0; i < shuffle_me.length; i++) {
       selected_vals.push({ "entry": shuffle_me[i], "is_selected": false })
-    }
+    } 
     return {
-      fully_loaded: true,
+      my_index: -1,
+      fully_loaded: false,
       selected_similar: selected_vals,
       similar: similar_get,
       similar_shuffled: shuffle_me,
@@ -117,8 +126,8 @@ export default {
       ws: split_vals[2],
       can_send: false,
     };
-  },
-  created() {
+  }, 
+  created() { 
     this.$watch(
       () => this.$route.params,
       (toParams, previousParams) => {
@@ -225,6 +234,41 @@ export default {
       }
 
       return result;
+    },
+    getIndex() {
+      let me = this;
+      me.generateArray();
+      me.my_index = -1;
+      me.fully_loaded = false;
+      if (me.user) {
+        usersRef
+          .get()
+          .then(function (snapshotUser) {
+            snapshotUser.forEach(function (childSnapshotUser) {
+              let user_email = childSnapshotUser.get("email");
+              let user_class = childSnapshotUser.get("class");
+              if (user_email == me.user.email) {
+                me.user_class = user_class;
+              }
+            })
+          }).then(() => {
+            if (me.user_class) {
+              var url_array = [];
+              for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
+                url_array.push("/rate/" + me.rated_array[ix_rated].string_rated);
+              }
+              url_array = [...url_array].sort((a, b) => a - b);
+              var bls = me.balancedLatinSquare(url_array, me.user_class - 1);
+              var string_find = "/rate/" + me.vehicle + "_" + me.ride + "_" + me.ws;
+              for (var ix_rated = 0; ix_rated < bls.length; ix_rated += 1) {
+                if (bls[ix_rated] == string_find) {
+                  me.my_index = ix_rated + 1;
+                  me.fully_loaded = true;
+                }
+              }
+            }
+          })
+      }
     },
     findNextUnrated() {
       let me = this;
