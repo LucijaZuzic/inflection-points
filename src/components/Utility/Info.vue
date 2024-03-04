@@ -32,7 +32,7 @@ export default {
   </h4>
   <br />
   <div>
-    The 5 most similar images among 20 displayed images must be selected for a total of 28 baseline images. 
+    The <b style="color: #3D9209">5</b> most similar images among <b style="color: #E42222">20</b> displayed images must be selected for a total of <b style="color: #154EC1">28</b> baseline images. 
   </div>
   <br />
   <div>
@@ -40,7 +40,7 @@ export default {
   </div>
   <br />
   <div>
-    A baseline image is displayed with a blue outline in the first row:
+    A baseline image is displayed with a <b style="color: #154EC1">blue</b> outline in the first row:
   </div>
   <br />
   <div>
@@ -49,12 +49,12 @@ export default {
   </div>
   <br />
   <div>
-    Among 20 displayed images with a red outline, 5 images that are the most similar to the baseline image must
+    Among <b style="color: #E42222">20</b> displayed images with a <b style="color: #E42222">red</b> outline, <b style="color: #3D9209">5</b> images that are the most similar to the baseline image must
     be selected by clicking on the image.
   </div>
   <br />
   <div>
-    Once an image is selected, the outline will become green.
+    Once an image is selected, the outline will become <b style="color: #3D9209">green</b>.
   </div>
   <br />
   <div>
@@ -68,8 +68,16 @@ export default {
   </div>
   <br />
   <div>
-    Once exactly 5 images are selected, the selection can be sent to the database by clicking on the
-    Send button.
+    Images are compared for similarity independent of their rotation.
+  </div> 
+  <br />
+  <div> 
+    Images that have been rotated are still similar to one another.
+  </div>
+  <br />
+  <div>
+    Once exactly <b style="color: #3D9209">5</b> images are selected, the selection can be sent to the database by clicking on the
+    <b style="color: #154EC1">Send</b> button.
   </div>
   <br />
   <div>
@@ -77,7 +85,7 @@ export default {
   </div>
   <br />
   <div>
-    The button will be disabled unless exactly 5 images are selected.
+    The button will be disabled unless exactly <b style="color: #3D9209">5</b> images are selected.
   </div>
 </template>
 
