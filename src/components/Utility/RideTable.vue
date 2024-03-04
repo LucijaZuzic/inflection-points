@@ -240,14 +240,14 @@ export default {
             let correct_chosen = 0;
             let max_sum_row = (20 - chosenID.length) * chosenID.length;
             for (var ix_chosen = 0; ix_chosen < chosenID.length; ix_chosen += 1) {
-                let ord_chosen = (parseInt(chosenID[ix_chosen].split("_")[2]) - 1) / 114 - ix_chosen;
-                sum_row += ord_chosen;
+                let ord_chosen = (parseInt(chosenID[ix_chosen].split("_")[2]) - 1) / 114;
                 if (ord_chosen == 0) {
                     one_chosen = true;
                 }
                 if (ord_chosen < 5) {
                     correct_chosen += 1;
                 }
+                sum_row += ord_chosen - ix_chosen;
             }
             return { "sum_row": sum_row, "max_sum_row": max_sum_row, "percentage": sum_row / max_sum_row * 100, "one_chosen": one_chosen, "correct_chosen": correct_chosen };
         },
