@@ -1,49 +1,39 @@
 <template>
+
   <body class="my_body">
-    <h4 class="display-4">
-      <va-icon size="large" name="rule_folder"></va-icon>
-      &nbsp;
-      Rate
-    </h4>
-    <br />
-    <h4>
-      <va-icon size="large" name="water"></va-icon>
-      &nbsp;
-      Vehicle &nbsp; {{ vehicle }}
-      &nbsp;
-      <va-icon size="large" name="route"></va-icon>
-      &nbsp;
-      Ride &nbsp; {{ ride }}
-      &nbsp;
-      <va-icon size="large" name="window"></va-icon>
-      &nbsp;
-      Window size &nbsp; {{ ws }}
-    </h4>
     <LoadingBar v-if="!fully_loaded"></LoadingBar>
     <span v-else>
-      <br />
-      <h4>
+      <h4 class="display-4">
         <va-icon size="large" name="pending"></va-icon>
         &nbsp;
         Progress &nbsp; {{ my_index }} / {{ rated_array.length }}
-      </h4>
-      <br />
-      <div>
-        <va-button v-on:click="sendData()" outline :rounded="false" style="border: none"
+        &nbsp;
+        <va-button v-on:click="sendData()" :rounded="false" style="height: 100%; border: none;"
           :disabled="!can_send || !user">Send</va-button>
-      </div>
-      <br />
+        &nbsp;
+        <va-button @click="$refs.description.show()" icon="info" :rounded="false" style="border: none"> Help
+        </va-button>
+        <va-modal :mobile-fullscreen="false" ref="description" hide-default-actions stateful>
+          <Info></Info>
+          <br />
+          <va-button @click="$refs.description.hide()" :rounded="false" style="border: none"> OK
+          </va-button>
+        </va-modal>
+      </h4>
+      <br /> 
       <div>
-        <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }' :selected_entry="false"
-          :selectable_entry="false" />
+        <div>
+          <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }'
+            :selected_entry="false" :selectable_entry="false" />
+        </div>
+        <br />
+        <MyImage
+          :key="selected_similar[index_similar_entry].entry.vehicle + '_' + selected_similar[index_similar_entry].entry.ride + '_' + selected_similar[index_similar_entry].entry.order + '_' + selected_similar[index_similar_entry].is_selected"
+          v-for="(similar_entry, index_similar_entry) in selected_similar"
+          :image_entry='selected_similar[index_similar_entry].entry'
+          :selected_entry="selected_similar[index_similar_entry].is_selected" :selectable_entry="true"
+          @input="(n) => (calculateSend(index_similar_entry))" />
       </div>
-      <br />
-      <MyImage
-        :key="selected_similar[index_similar_entry].entry.vehicle + '_' + selected_similar[index_similar_entry].entry.ride + '_' + selected_similar[index_similar_entry].entry.order + '_' + selected_similar[index_similar_entry].is_selected"
-        v-for="(similar_entry, index_similar_entry) in selected_similar"
-        :image_entry='selected_similar[index_similar_entry].entry'
-        :selected_entry="selected_similar[index_similar_entry].is_selected" :selectable_entry="true"
-        @input="(n) => (calculateSend(index_similar_entry))" />
     </span>
   </body>
 </template>
@@ -52,18 +42,17 @@
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { usersRef, ratingsRef } from "../../firebase_main.js";
-import AllSimilar5 from '../../assets/marker_all_percent_1_5.json';
-import AllSimilar10 from '../../assets/marker_all_percent_1_10.json';
-import AllSimilar15 from '../../assets/marker_all_percent_1_15.json';
 import AllSimilar20 from '../../assets/marker_all_percent_1_20.json';
 import AllData from '../../assets/all_no_data_short.json';
 import MyImage from './MyImage.vue';
 import LoadingBar from "./LoadingBar.vue";
+import Info from "../Utility/Info.vue";
 
 export default {
   components: {
     MyImage,
-    LoadingBar
+    LoadingBar,
+    Info
   },
   mounted() {
     const auth = getAuth();
@@ -79,7 +68,7 @@ export default {
       }
       if (!this.user) {
         this.$router.push("/login");
-      } else { 
+      } else {
         this.getIndex();
       }
       return true;
@@ -91,16 +80,7 @@ export default {
     this.vehicle = split_vals[0];
     this.ride = split_vals[1];
     this.ws = split_vals[2];
-    var AllSimilar = AllSimilar5;
-    if (this.ws == 10) {
-      AllSimilar = AllSimilar10;
-    }
-    if (this.ws == 15) {
-      AllSimilar = AllSimilar15;
-    }
-    if (this.ws == 20) {
-      AllSimilar = AllSimilar20;
-    }
+    var AllSimilar = AllSimilar20;
     let similar_get = [];
     for (var i = 0; i < AllSimilar.compare_to.length; i++) {
       let some_ride = AllSimilar.compare_to[i];
@@ -114,7 +94,7 @@ export default {
     var selected_vals = [];
     for (var i = 0; i < shuffle_me.length; i++) {
       selected_vals.push({ "entry": shuffle_me[i], "is_selected": false })
-    } 
+    }
     return {
       my_index: -1,
       fully_loaded: false,
@@ -126,8 +106,8 @@ export default {
       ws: split_vals[2],
       can_send: false,
     };
-  }, 
-  created() { 
+  },
+  created() {
     this.$watch(
       () => this.$route.params,
       (toParams, previousParams) => {

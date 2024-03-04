@@ -1,6 +1,6 @@
 <template>
     <va-card :color="color_compute"
-        style="padding: 5px; margin: 5px; display: inline-block; vertical-align: top; text-align: left; width: 18%"
+        style="padding: 5px; margin: 5px; display: inline-block; vertical-align: top; text-align: left; width: 18%; max-width: 200px"
         v-on:click="checkSelect()">
         <va-image :ratio="1" :id="my_vehicle + '/' + my_ride"
             :src="'/cleaned_png/' + my_vehicle + '/' + my_ride + '/' + my_vehicle + '_' + my_ride + '.png'"></va-image>
@@ -9,7 +9,7 @@
 
 <script>
 export default {
-    props: ["image_entry", "selected_entry", "selectable_entry"],
+    props: ["image_entry", "selected_entry", "selectable_entry", "use_color"],
     emits: ["input"],
     data() {
         var my_entry = this.$props.image_entry;
@@ -33,7 +33,15 @@ export default {
     computed: {
         color_compute: function () {
             if (!this.my_selectable) {
-                return "primary";
+                if (!this.use_color) {
+                    return "primary";
+                } else {
+                    if (this.my_selected) {
+                        return "success";
+                    } else {
+                        return "danger";
+                    }
+                }
             }
             if (this.my_selected) {
                 return "success";

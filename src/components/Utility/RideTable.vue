@@ -5,9 +5,6 @@ import NoDataToDisplay from "./NoDataToDisplay.vue";
 import LoadingBar from "./LoadingBar.vue";
 import MyCounter from "./MyCounter.vue";
 import { ratingsRef } from "../../firebase_main.js";
-import AllSimilar5 from '../../assets/marker_all_percent_1_5.json';
-import AllSimilar10 from '../../assets/marker_all_percent_1_10.json';
-import AllSimilar15 from '../../assets/marker_all_percent_1_15.json';
 import AllSimilar20 from '../../assets/marker_all_percent_1_20.json';
 export default {
     components: {
@@ -134,16 +131,7 @@ export default {
         getSumChosenEuclid(combinedData) {
             let original = combinedData.original.split("_");
             let chosenID = combinedData.other;
-            var AllSimilar = AllSimilar5;
-            if (original[2] == 10) {
-                AllSimilar = AllSimilar10;
-            }
-            if (original[2] == 15) {
-                AllSimilar = AllSimilar15;
-            }
-            if (original[2] == 20) {
-                AllSimilar = AllSimilar20;
-            }
+            var AllSimilar = AllSimilar20;
             let similar_get = [];
             for (var i = 0; i < AllSimilar.compare_to.length; i++) {
                 let some_ride = AllSimilar.compare_to[i];
@@ -206,16 +194,7 @@ export default {
                 if (this.isUsedSize(ws_use) == "danger") {
                     continue;
                 }
-                var AllSimilar = AllSimilar5;
-                if (ws_use == 10) {
-                    AllSimilar = AllSimilar10;
-                }
-                if (ws_use == 15) {
-                    AllSimilar = AllSimilar15;
-                }
-                if (ws_use == 20) {
-                    AllSimilar = AllSimilar20;
-                }
+                var AllSimilar = AllSimilar20;
                 for (var i = 0; i < AllData.vehicles.length; i++) {
                     for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
                         let similar_get = [];

@@ -8,6 +8,7 @@ import { usersRef } from "../../firebase_main.js";
 import AllData from '../../assets/all_no_data_short.json';
 import LoadingBar from "../Utility/LoadingBar.vue";
 import RideTable from "../Utility/RideTable.vue";
+import Info from "../Utility/Info.vue";
 
 export default {
   created() {
@@ -136,24 +137,35 @@ export default {
   components: {
     NoDataToDisplay,
     LoadingBar,
-    RideTable
+    RideTable,
+    Info
   },
 };
 </script>
 
 <template>
+
   <body class="my_body" v-if="!fully_loaded">
     <LoadingBar></LoadingBar>
   </body>
 
   <body class="my_body" v-else>
     <span v-if="friend.email != '' || friend.displayName != '' || friend.uid != ''">
-      <h4 class="display-4">
+      <h4 class=" display-4">
         <va-icon size="large" name="star" v-if="friend.admin"></va-icon>
         <va-icon size="large" name="account_box" v-else></va-icon>
         &nbsp;
         <span v-if="user.email != friend.email">User profile</span>
         <span v-else>My profile</span>
+        &nbsp;
+        <va-button @click="$refs.description.show()" icon="info" :rounded="false" style="border: none"> Help
+        </va-button>
+        <va-modal :mobile-fullscreen="false" ref="description" hide-default-actions stateful>
+          <Info></Info>
+          <br />
+          <va-button @click="$refs.description.hide()" :rounded="false" style="border: none"> OK
+          </va-button>
+        </va-modal>
       </h4>
       <va-divider></va-divider>
       <div style="font-weight: bold">
@@ -161,7 +173,8 @@ export default {
         {{ friend.displayName }} &nbsp;
         <va-icon name="email"></va-icon> &nbsp;
         {{ friend.email }} &nbsp;
-        <span v-if="found_me.admin"><va-icon name="interests"></va-icon> &nbsp; User class &nbsp; {{ friend.class }} </span>
+        <span v-if="found_me.admin"><va-icon name="interests"></va-icon> &nbsp; User class &nbsp; {{ friend.class }}
+        </span>
       </div>
       <va-divider v-if="found_me.admin"></va-divider>
       <RideTable v-if="found_me.admin" :user_to_find="friend.uid" :is_admin="found_me.admin" />
