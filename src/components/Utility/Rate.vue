@@ -42,6 +42,7 @@
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { usersRef, ratingsRef } from "../../firebase_main.js";
+import AllSimilar10 from '../../assets/marker_all_percent_1_10.json';
 import AllSimilar20 from '../../assets/marker_all_percent_1_20.json';
 import AllData from '../../assets/all_no_data_short.json';
 import MyImage from './MyImage.vue';
@@ -80,7 +81,10 @@ export default {
     this.vehicle = split_vals[0];
     this.ride = split_vals[1];
     this.ws = split_vals[2];
-    var AllSimilar = AllSimilar20;
+    var AllSimilar = AllSimilar10;
+    if (this.ws == 20) {
+      AllSimilar = AllSimilar20;
+    }
     let similar_get = [];
     for (var i = 0; i < AllSimilar.compare_to.length; i++) {
       let some_ride = AllSimilar.compare_to[i];
@@ -176,7 +180,7 @@ export default {
     },
     generateArray() {
       this.rated_array = [];
-      for (var ws_use = 20; ws_use < 25; ws_use += 5) {
+      for (var ws_use = 10; ws_use < 25; ws_use += 10) {
         for (var i = 0; i < AllData.vehicles.length; i++) {
           if (AllData.vehicles[i].vehicle < 10) {
             for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {

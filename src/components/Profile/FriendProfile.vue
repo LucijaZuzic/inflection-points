@@ -42,7 +42,7 @@ export default {
     my_activity.found_me = { email: "", displayName: "", uid: "", class: -1, admin: false };
     let noClassUsers = [];
     let classes_count = [];
-    for (var ws_use = 20; ws_use < 25; ws_use += 5) {
+    for (var ws_use = 10; ws_use < 25; ws_use += 10) {
       for (var i = 0; i < AllData.vehicles.length; i++) {
         for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
           classes_count.push({ "count": 0 });
@@ -177,7 +177,7 @@ export default {
         </span>
       </div>
       <va-divider v-if="found_me.admin"></va-divider>
-      <RideTable v-if="found_me.admin" :user_to_find="friend.uid" :is_admin="found_me.admin" />
+      <RideTable :user_to_find="friend.uid" :is_admin="found_me.admin" />
     </span>
     <span v-else>
       <NoDataToDisplay customMessage="User not found">

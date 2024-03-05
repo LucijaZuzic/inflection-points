@@ -4,7 +4,8 @@ import AllData from '../../assets/all_no_data_short.json'
 import NoDataToDisplay from "./NoDataToDisplay.vue";
 import LoadingBar from "./LoadingBar.vue";
 import MyCounter from "./MyCounter.vue";
-import { ratingsRef } from "../../firebase_main.js";
+import { ratingsRef, usersRef } from "../../firebase_main.js";
+import AllSimilar10 from '../../assets/marker_all_percent_1_10.json';
 import AllSimilar20 from '../../assets/marker_all_percent_1_20.json';
 export default {
     components: {
@@ -35,7 +36,7 @@ export default {
             if (AllData.vehicles[i].vehicle < 10) {
                 if (AllData.vehicles[i].rides.length > 0) {
                     this.vehicle_ix_array.push({ "value": i, "text": AllData.vehicles[i].vehicle });
-                    this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": false });
+                    this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": true });
                 }
             }
         }
@@ -43,7 +44,7 @@ export default {
             if (AllData.vehicles[i].vehicle >= 10) {
                 if (AllData.vehicles[i].rides.length > 0) {
                     this.vehicle_ix_array.push({ "value": i, "text": AllData.vehicles[i].vehicle });
-                    this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": false });
+                    this.vehicle_ix_used.push({ "value": i, "text": AllData.vehicles[i].vehicle, "used": true });
                 }
             }
         }
@@ -55,8 +56,8 @@ export default {
             }
         }
         this.only_rated_sizes = [];
-        for (var ws_use = 20; ws_use < 25; ws_use += 5) {
-            this.only_rated_sizes.push({ "size": ws_use, "use_size": false });
+        for (var ws_use = 10; ws_use < 25; ws_use += 10) {
+            this.only_rated_sizes.push({ "size": ws_use, "use_size": true });
         }
         this.rides_for_vehicles = [];
         for (var i = 0; i < AllData.vehicles.length; i++) {
@@ -65,7 +66,7 @@ export default {
                 for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
                     rides_for_a_vehicle.push({
                         ride: AllData.vehicles[i].rides[j].ride,
-                        used: false
+                        used: true
                     });
                 }
                 this.rides_for_vehicles.push({
@@ -81,7 +82,7 @@ export default {
                 for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
                     rides_for_a_vehicle.push({
                         ride: AllData.vehicles[i].rides[j].ride,
-                        used: false
+                        used: true
                     });
                 }
                 this.rides_for_vehicles.push({
@@ -131,7 +132,10 @@ export default {
         getSumChosenEuclid(combinedData) {
             let original = combinedData.original.split("_");
             let chosenID = combinedData.other;
-            var AllSimilar = AllSimilar20;
+            var AllSimilar = AllSimilar10;
+            if (original[2] == 20) {
+                AllSimilar = AllSimilar20;
+            }
             let similar_get = [];
             for (var i = 0; i < AllSimilar.compare_to.length; i++) {
                 let some_ride = AllSimilar.compare_to[i];
@@ -190,11 +194,14 @@ export default {
             this.max_euclid_first = 0;
             this.min_euclid_last = 1000;
             this.max_euclid_last = 0;
-            for (var ws_use = 20; ws_use < 25; ws_use += 5) {
+            for (var ws_use = 10; ws_use < 25; ws_use += 10) {
                 if (this.isUsedSize(ws_use) == "danger") {
                     continue;
                 }
-                var AllSimilar = AllSimilar20;
+                var AllSimilar = AllSimilar10;
+                if (ws_use == 20) {
+                    AllSimilar = AllSimilar20;
+                }
                 for (var i = 0; i < AllData.vehicles.length; i++) {
                     for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
                         let similar_get = [];
@@ -279,12 +286,84 @@ export default {
                 }
             }
         },
+        generateArray() {
+            this.rated_array = [];
+            for (var ws_use = 10; ws_use < 25; ws_use += 10) {
+                for (var i = 0; i < AllData.vehicles.length; i++) {
+                    if (AllData.vehicles[i].vehicle < 10) {
+                        for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
+                            this.rated_array.push({ "string_rated": AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use, "rated_before": false });
+                        }
+                    }
+                }
+                for (var i = 0; i < AllData.vehicles.length; i++) {
+                    if (AllData.vehicles[i].vehicle >= 10) {
+                        for (var j = 0; j < AllData.vehicles[i].rides.length; j++) {
+                            this.rated_array.push({ "string_rated": AllData.vehicles[i].vehicle + "_" + AllData.vehicles[i].rides[j].ride + "_" + ws_use, "rated_before": false });
+                        }
+                    }
+                }
+            }
+        },
+        balancedLatinSquare(array, participantId) {
+            var result = [];
+            // Based on "Bradley, J. V. Complete counterbalancing of immediate sequential effects in a Latin square design. J. Amer. Statist. Ass.,.1958, 53, 525-528. "
+            for (var i = 0, j = 0, h = 0; i < array.length; ++i) {
+                var val = 0;
+                if (i < 2 || i % 2 != 0) {
+                    val = j++;
+                } else {
+                    val = array.length - h - 1;
+                    ++h;
+                }
+
+                var idx = (val + participantId) % array.length;
+                result.push(array[idx]);
+            }
+
+            if (array.length % 2 != 0 && participantId % 2 != 0) {
+                result = result.reverse();
+            }
+
+            return result;
+        },
+        findNextUnrated() {
+            let me = this;
+            me.generateArray();
+            if (me.user) {
+                usersRef
+                    .get()
+                    .then(function (snapshotUser) {
+                        snapshotUser.forEach(function (childSnapshotUser) {
+                            let user_email = childSnapshotUser.get("email");
+                            let user_class = childSnapshotUser.get("class");
+                            if (user_email == me.user.email) {
+                                me.user_class = user_class;
+                            }
+                        })
+                    }).then(() => {
+                        if (me.user_class) {
+                            var url_array = [];
+                            for (var ix_rated = 0; ix_rated < me.rated_array.length; ix_rated += 1) {
+                                url_array.push("/rate/" + me.rated_array[ix_rated].string_rated);
+                            }
+                            url_array = [...url_array].sort((a, b) => a - b);
+                            var bls = me.balancedLatinSquare(url_array, me.user_class - 1);
+                            me.$router.push(bls[0]);
+                        } else {
+                            me.$router.push("/profile/" + me.user.email);
+                        }
+                    })
+            } else {
+                me.$router.push("/login");
+            }
+        },
         fetch_rides() {
             this.getMaxMinEuclid();
             this.rendering_key = !this.rendering_key;
             this.fully_loaded = false;
             this.rides = [];
-            for (var ws_use = 20; ws_use < 25; ws_use += 5) {
+            for (var ws_use = 10; ws_use < 25; ws_use += 10) {
                 if (this.isUsedSize(ws_use) == "danger") {
                     continue;
                 }
@@ -395,6 +474,9 @@ export default {
                     me.perPage = 1;
                     me.currentPage = 1;
                     me.fully_loaded = true;
+                    if (me.user.uid == me.$props.user_to_find && me.count_rated != 2* AllData.vehicles.length * AllData.vehicles[0].rides.length) {
+                        me.findNextUnrated();
+                    }
                 });
         },
         selectAllSizes(status_size) {
@@ -538,341 +620,378 @@ export default {
 </script>
 
 <template>
-    <h4 class="display-4">
-        <va-icon size="large" name="rule_folder"></va-icon>
-        &nbsp; Find rides
-    </h4>
-    <va-divider></va-divider>
-    <LoadingBar v-if="!fully_loaded"></LoadingBar>
-    <span v-else>
-        <div>
-            <va-checkbox style="display: inline-block" label="Only rated" v-model="only_rated" />
-        </div>
-        <br />
-        <va-card>
-            <br />
+    <span v-if="is_admin">
+        <h4 class="display-4">
+            <va-icon size="large" name="rule_folder"></va-icon>
+            &nbsp; Find rides
+        </h4>
+        <va-divider></va-divider>
+        <LoadingBar v-if="!fully_loaded"></LoadingBar>
+        <span v-else>
             <div>
-                <h4 style="display: inline-block">
-                    <va-icon name="window"></va-icon>
-                    &nbsp;
-                    Window size
-                </h4>
-                &nbsp;
-                <va-button v-on:click="selectAllSizes(true)" icon="done" outline :rounded="false" style="border: none">All
-                    window sizes</va-button>
-                &nbsp;
-                <va-button v-on:click="selectAllSizes(false)" icon="close" outline :rounded="false" style="border: none">No
-                    window sizes</va-button>
+                <va-checkbox style="display: inline-block" label="Only rated" v-model="only_rated" />
             </div>
             <br />
-            <div>
-                <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
-                    v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
-                </va-button>
-            </div>
-            <br />
-        </va-card>
-        <br />
-        <va-card>
-            <br />
-            <div>
-                <h4>
+            <va-card>
+                <br />
+                <div>
                     <h4 style="display: inline-block">
-                        <va-icon name="water"></va-icon>
+                        <va-icon name="window"></va-icon>
                         &nbsp;
-                        Vehicle
+                        Window size
                     </h4>
                     &nbsp;
-                    <va-button v-on:click="selectAllVehicles(true)" icon="done" outline :rounded="false"
-                        style="border: none">All vehicles</va-button>
+                    <va-button v-on:click="selectAllSizes(true)" icon="done" outline :rounded="false"
+                        style="border: none">All
+                        window sizes</va-button>
                     &nbsp;
-                    <va-button v-on:click="selectAllVehicles(false)" icon="close" outline :rounded="false"
-                        style="border: none">No vehicles</va-button>
-                </h4>
-            </div>
+                    <va-button v-on:click="selectAllSizes(false)" icon="close" outline :rounded="false"
+                        style="border: none">No
+                        window sizes</va-button>
+                </div>
+                <br />
+                <div>
+                    <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedSize(s.size)"
+                        v-for="s in only_rated_sizes" v-on:click="useSize(s.size)">{{ s.size }}
+                    </va-button>
+                </div>
+                <br />
+            </va-card>
             <br />
-            <div>
-                <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
-                    v-for="v in vehicle_ix_array" v-on:click="useVehicle(v)">{{ v.text }}
-                </va-button>
-            </div>
-            <br />
-        </va-card>
-        <br />
-        <va-card>
-            <br />
-            <div>
-                <h4 style="display: inline-block">
-                    <va-icon name="route"></va-icon>
-                    &nbsp;
-                    Rides
-                </h4>
-                &nbsp;
-                <va-button :key="showRides + '_1'" outline :rounded="false" style="border: none" :icon="getIcon(showRides)"
-                    v-on:click="showRides = !showRides" />
-                &nbsp;
-                <va-button v-on:click="selectAllRides(true)" icon="done" outline :rounded="false" style="border: none">All
-                    rides</va-button>
-                &nbsp;
-                <va-button v-on:click="selectAllRides(false)" icon="close" outline :rounded="false" style="border: none">No
-                    rides</va-button>
-            </div>
-            <br />
-        </va-card>
-        <br />
-        <span v-if="showRides">
-            <div v-for="veh in vehicle_ix_array">
-                <va-card v-if="isUsedVehicle(veh) != 'danger'">
-                    <br />
-                    <div>
+            <va-card>
+                <br />
+                <div>
+                    <h4>
                         <h4 style="display: inline-block">
                             <va-icon name="water"></va-icon>
                             &nbsp;
                             Vehicle
-                            &nbsp;
-                            {{ rides_for_vehicles[getVehicleIx(veh.text)].vehicle }}
                         </h4>
                         &nbsp;
-                        <va-button :key="mutateVisibility + '_1'" outline :rounded="false" style="border: none"
-                            :icon="getIcon(getVisible(getVehicleIx(veh.text)))"
-                            v-on:click="changeVisible(getVehicleIx(veh.text))" />
+                        <va-button v-on:click="selectAllVehicles(true)" icon="done" outline :rounded="false"
+                            style="border: none">All vehicles</va-button>
                         &nbsp;
-                        <va-button v-on:click="selectAllRidesVehicle(true, getVehicleIx(veh.text))" icon="done" outline
-                            :rounded="false" style="border: none">All rides for vehicle
-                        </va-button>
+                        <va-button v-on:click="selectAllVehicles(false)" icon="close" outline :rounded="false"
+                            style="border: none">No vehicles</va-button>
+                    </h4>
+                </div>
+                <br />
+                <div>
+                    <va-button size="small" outline :rounded="false" style="border: none" :color="isUsedVehicle(v)"
+                        v-for="v in vehicle_ix_array" v-on:click="useVehicle(v)">{{ v.text }}
+                    </va-button>
+                </div>
+                <br />
+            </va-card>
+            <br />
+            <va-card>
+                <br />
+                <div>
+                    <h4 style="display: inline-block">
+                        <va-icon name="route"></va-icon>
                         &nbsp;
-                        <va-button v-on:click="selectAllRidesVehicle(false, getVehicleIx(veh.text))" icon="close" outline
-                            :rounded="false" style="border: none">No rides for vehicle
-                        </va-button>
+                        Rides
+                    </h4>
+                    &nbsp;
+                    <va-button :key="showRides + '_1'" outline :rounded="false" style="border: none"
+                        :icon="getIcon(showRides)" v-on:click="showRides = !showRides" />
+                    &nbsp;
+                    <va-button v-on:click="selectAllRides(true)" icon="done" outline :rounded="false"
+                        style="border: none">All
+                        rides</va-button>
+                    &nbsp;
+                    <va-button v-on:click="selectAllRides(false)" icon="close" outline :rounded="false"
+                        style="border: none">No
+                        rides</va-button>
+                </div>
+                <br />
+            </va-card>
+            <br />
+            <span v-if="showRides">
+                <div v-for="veh in vehicle_ix_array">
+                    <va-card v-if="isUsedVehicle(veh) != 'danger'">
+                        <br />
+                        <div>
+                            <h4 style="display: inline-block">
+                                <va-icon name="water"></va-icon>
+                                &nbsp;
+                                Vehicle
+                                &nbsp;
+                                {{ rides_for_vehicles[getVehicleIx(veh.text)].vehicle }}
+                            </h4>
+                            &nbsp;
+                            <va-button :key="mutateVisibility + '_1'" outline :rounded="false" style="border: none"
+                                :icon="getIcon(getVisible(getVehicleIx(veh.text)))"
+                                v-on:click="changeVisible(getVehicleIx(veh.text))" />
+                            &nbsp;
+                            <va-button v-on:click="selectAllRidesVehicle(true, getVehicleIx(veh.text))" icon="done"
+                                outline :rounded="false" style="border: none">All rides for vehicle
+                            </va-button>
+                            &nbsp;
+                            <va-button v-on:click="selectAllRidesVehicle(false, getVehicleIx(veh.text))" icon="close"
+                                outline :rounded="false" style="border: none">No rides for vehicle
+                            </va-button>
+                        </div>
+                        <br />
+                        <div v-if="getVisible(getVehicleIx(veh.text))" :key="mutateVisibility + '_2'">
+                            <va-button size="small" outline :rounded="false" style="border: none"
+                                :color="isUsedRide(getVehicleIx(veh.text), ix_r)"
+                                v-for="r, ix_r in rides_for_vehicles[getVehicleIx(veh.text)].rides"
+                                v-on:click="useRide(getVehicleIx(veh.text), ix_r)">{{ r.ride }}
+                            </va-button>
+                        </div>
+                        <br v-if="rides_for_vehicles[getVehicleIx(veh.text)].visible" />
+                    </va-card>
+                    <br v-if="isUsedVehicle(veh) != 'danger'" />
+                </div>
+            </span>
+            <span v-if="rides.length > 0">
+                <span v-if="count_rated">
+                    <div>
+                        <b>Rank: &nbsp;</b>
+                        {{ sum_of_table }} /
+                        {{ count_rated }} =
+                        {{ Math.round(sum_of_table / count_rated * 100) / 100 }}
+                        &nbsp;
+                        {{ Math.round(sum_of_table / count_rated * 100) / 100 }} / 75 =
+                        {{ Math.round(sum_of_table / count_rated / 75 * 10000) / 100 }} %
+                    </div>
+                    <div>
+                        <b>First quartile: &nbsp;</b>
+                        {{ num_correct }} /
+                        {{ count_rated }} =
+                        {{ Math.round(num_correct / count_rated * 100) / 100 }}
+                        &nbsp;
+                        {{ Math.round(num_correct / count_rated * 100) / 100 }} / 5 =
+                        {{ Math.round(num_correct / count_rated / 5 * 10000) / 100 }} %
+                    </div>
+                    <div>
+                        <b>Most similar: &nbsp;</b>
+                        {{ num_one }} /
+                        {{ count_rated }} =
+                        {{ Math.round(num_one / count_rated * 10000) / 100 }} %
+                    </div>
+                    <div>
+                        <b>Euclidean: &nbsp;</b>
+                        {{ Math.round(sum_of_table_euclid * 100) / 100 }} /
+                        {{ count_rated }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }}
+                    </div>
+                    <div>
+                        <b>Euclidean (percent): &nbsp;</b>
+                        {{ Math.round(sum_of_table_euclid_percent * 100) / 100 }} /
+                        {{ count_rated }} =
+                        {{ Math.round(sum_of_table_euclid_percent / count_rated * 100) / 100 }} %
+                    </div>
+                    <div>
+                        <b>Euclidean (average): &nbsp;</b>
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(avg_euclid_range
+        *
+        100)
+        / 100 }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated / avg_euclid_range * 10000) / 100 }}
+                        %
+                    </div>
+                    <div>
+                        <b>Euclidean (median): &nbsp;</b>
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{
+        Math.round(median_euclid_range
+            *
+            100) / 100 }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated / median_euclid_range * 10000) / 100 }}
+                        %
+                    </div>
+                    <div>
+                        <b>Euclidean (max): &nbsp;</b>
+                        {{ Math.round(max_euclid_range_last * 100) / 100 }} - {{ Math.round(max_euclid_range_first *
+        100) /
+        100
+                        }} =
+                        {{ Math.round(max_euclid_range * 100) / 100 }}
+                        &nbsp;
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(max_euclid_range
+        *
+        100)
+        / 100 }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated / max_euclid_range * 10000) / 100 }}
+                        %
+                    </div>
+                    <div>
+                        <b>Euclidean (min): &nbsp;</b>
+                        {{ Math.round(min_euclid_range_last * 100) / 100 }} - {{ Math.round(min_euclid_range_first *
+        100) /
+        100
+                        }} =
+                        {{ Math.round(min_euclid_range * 100) / 100 }}
+                        &nbsp;
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(min_euclid_range
+        *
+        100)
+        / 100 }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated / min_euclid_range * 10000) / 100 }}
+                        %
+                    </div>
+                    <div>
+                        <b>Euclidean (min - max): &nbsp;</b>
+                        | {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }}
+                        | =
+                        {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }}
+                        &nbsp;
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{
+        Math.round(Math.abs(min_euclid_last -
+            max_euclid_first) * 100) / 100 }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated / Math.abs(min_euclid_last - max_euclid_first) *
+        10000) / 100 }}
+                        %
+                    </div>
+                    <div>
+                        <b>Euclidean (max - min): &nbsp;</b>
+                        {{ Math.round(max_euclid_last * 100) / 100 }} - {{ Math.round(min_euclid_first * 100) / 100 }} =
+                        {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }}
+                        &nbsp;
+                        {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round((max_euclid_last
+        -
+        min_euclid_first) * 100) / 100 }} =
+                        {{ Math.round(sum_of_table_euclid / count_rated / (max_euclid_last - min_euclid_first) * 10000)
+        /
+        100 }}
+                        %
                     </div>
                     <br />
-                    <div v-if="getVisible(getVehicleIx(veh.text))" :key="mutateVisibility + '_2'">
-                        <va-button size="small" outline :rounded="false" style="border: none"
-                            :color="isUsedRide(getVehicleIx(veh.text), ix_r)"
-                            v-for="r, ix_r in rides_for_vehicles[getVehicleIx(veh.text)].rides"
-                            v-on:click="useRide(getVehicleIx(veh.text), ix_r)">{{ r.ride }}
-                        </va-button>
+                    <va-input v-model="originalText" type="textarea" />
+                    <br />
+                </span>
+                <div>
+                    <div style="display: inline-block">
+                        <MyCounter :key="'perPage_' + perPage" :min_value="1"
+                            :max_value="Math.min(Math.ceil(this.filtered.length), 10)" v-bind:value="perPage"
+                            @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Per page'">
+                        </MyCounter>
                     </div>
-                    <br v-if="rides_for_vehicles[getVehicleIx(veh.text)].visible" />
-                </va-card>
-                <br v-if="isUsedVehicle(veh) != 'danger'" />
-            </div>
-        </span>
-        <span v-if="rides.length > 0">
-            <span v-if="is_admin && count_rated">
-                <div>
-                    <b>Rank: &nbsp;</b>
-                    {{ sum_of_table }} /
-                    {{ count_rated }} =
-                    {{ Math.round(sum_of_table / count_rated * 100) / 100 }}
-                    &nbsp;
-                    {{ Math.round(sum_of_table / count_rated * 100) / 100 }} / 75 =
-                    {{ Math.round(sum_of_table / count_rated / 75 * 10000) / 100 }} %
-                </div>
-                <div>
-                    <b>First quartile: &nbsp;</b>
-                    {{ num_correct }} /
-                    {{ count_rated }} =
-                    {{ Math.round(num_correct / count_rated * 100) / 100 }}
-                    &nbsp;
-                    {{ Math.round(num_correct / count_rated * 100) / 100 }} / 5 =
-                    {{ Math.round(num_correct / count_rated / 5 * 10000) / 100 }} %
-                </div>
-                <div>
-                    <b>Most similar: &nbsp;</b>
-                    {{ num_one }} /
-                    {{ count_rated }} =
-                    {{ Math.round(num_one / count_rated * 10000) / 100 }} %
-                </div>
-                <div>
-                    <b>Euclidean: &nbsp;</b>
-                    {{ Math.round(sum_of_table_euclid * 100) / 100 }} /
-                    {{ count_rated }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }}
-                </div>
-                <div>
-                    <b>Euclidean (percent): &nbsp;</b>
-                    {{ Math.round(sum_of_table_euclid_percent * 100) / 100 }} /
-                    {{ count_rated }} =
-                    {{ Math.round(sum_of_table_euclid_percent / count_rated * 100) / 100 }} %
-                </div>
-                <div>
-                    <b>Euclidean (average): &nbsp;</b>
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(avg_euclid_range * 100)
-                        / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / avg_euclid_range * 10000) / 100 }}
-                    %
-                </div>
-                <div>
-                    <b>Euclidean (median): &nbsp;</b>
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(median_euclid_range *
-                        100) / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / median_euclid_range * 10000) / 100 }}
-                    %
-                </div>
-                <div>
-                    <b>Euclidean (max): &nbsp;</b>
-                    {{ Math.round(max_euclid_range_last * 100) / 100 }} - {{ Math.round(max_euclid_range_first * 100) / 100
-                    }} =
-                    {{ Math.round(max_euclid_range * 100) / 100 }}
-                    &nbsp;
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(max_euclid_range * 100)
-                        / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / max_euclid_range * 10000) / 100 }}
-                    %
-                </div>
-                <div>
-                    <b>Euclidean (min): &nbsp;</b>
-                    {{ Math.round(min_euclid_range_last * 100) / 100 }} - {{ Math.round(min_euclid_range_first * 100) / 100
-                    }} =
-                    {{ Math.round(min_euclid_range * 100) / 100 }}
-                    &nbsp;
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(min_euclid_range * 100)
-                        / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / min_euclid_range * 10000) / 100 }}
-                    %
-                </div>
-                <div>
-                    <b>Euclidean (min - max): &nbsp;</b>
-                    | {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }} | =
-                    {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }}
-                    &nbsp;
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round(Math.abs(min_euclid_last -
-                        max_euclid_first) * 100) / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / Math.abs(min_euclid_last - max_euclid_first) * 10000) / 100 }}
-                    %
-                </div>
-                <div>
-                    <b>Euclidean (max - min): &nbsp;</b>
-                    {{ Math.round(max_euclid_last * 100) / 100 }} - {{ Math.round(min_euclid_first * 100) / 100 }} =
-                    {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }}
-                    &nbsp;
-                    {{ Math.round(sum_of_table_euclid / count_rated * 100) / 100 }} / {{ Math.round((max_euclid_last -
-                        min_euclid_first) * 100) / 100 }} =
-                    {{ Math.round(sum_of_table_euclid / count_rated / (max_euclid_last - min_euclid_first) * 10000) / 100 }}
-                    %
+                    <div style="display: inline-block; margin-left: 10px">
+                        <MyCounter :key="'currentPage_' + currentPage" :min_value="1"
+                            :max_value="Math.ceil(this.filtered.length / perPage)" v-bind:value="currentPage"
+                            @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Page'">
+                        </MyCounter>
+                    </div>
                 </div>
                 <br />
-                <va-input v-model="originalText" type="textarea" />
-                <br />
+                <va-data-table :items="rides" :filter="filter" :columns="columns" :hoverable="true" :per-page="perPage"
+                    :current-page="currentPage" @filtered="filtered = $event.items" no-data-filtered-html="No results"
+                    no-data-html="No data" :filter-method="customFilteringFn">
+                    <template #header(vehicle)>Vehicle</template>
+
+                    <template #header(ride)>Ride</template>
+
+                    <template #header(ws)>Window size</template>
+
+                    <template #header(combined)>Score</template>
+
+                    <template #cell(combined)="{ source: combined }">
+                        <span v-if="combined.other.length">
+                            <div>
+                                <b>Rank: &nbsp;</b>
+                                {{ getSumChosen(combined.other).sum_row }} / 75 =
+                                {{ Math.round(getSumChosen(combined.other).sum_row / 75 * 100) / 100 }} %
+                            </div>
+                            <div>
+                                <b>First quartile: &nbsp;</b>
+                                {{ getSumChosen(combined.other).correct_chosen }} / 5 =
+                                {{ Math.round(getSumChosen(combined.other).correct_chosen / 5 * 10000) / 100 }} %
+                            </div>
+                            <div>
+                                <b>Most similar: &nbsp;</b>
+                                <va-icon name="done" v-if="getSumChosen(combined.other).one_chosen"></va-icon>
+                                <va-icon name="close" v-else></va-icon>
+                            </div>
+                            <div>
+                                <b>Euclidean: &nbsp;</b>
+                                {{ Math.round(getSumChosenEuclid(combined).chosen_sum * 100) / 100 }} - {{
+        Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }}
+                                &nbsp;
+                                {{ Math.round(getSumChosenEuclid(combined).last_five * 100) / 100 }} - {{
+        Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }}
+                            </div>
+                            <div>
+                                <b>Euclidean (percent): &nbsp;</b>
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff_percent * 100) / 100 }} %
+                            </div>
+                            <div>
+                                <b>Euclidean (average): &nbsp;</b>
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round(avg_euclid_range * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff / avg_euclid_range * 10000) / 100 }} %
+                            </div>
+                            <div>
+                                <b>Euclidean (median): &nbsp;</b>
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round(median_euclid_range * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff / median_euclid_range * 10000) / 100 }}
+                                %
+                            </div>
+                            <div>
+                                <b>Euclidean (max): &nbsp;</b>
+                                {{ Math.round(max_euclid_range_last * 100) / 100 }} - {{
+        Math.round(max_euclid_range_first *
+            100) /
+        100 }} =
+                                {{ Math.round(max_euclid_range * 100) / 100 }}
+                                &nbsp;
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round(max_euclid_range * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff / max_euclid_range * 10000) / 100 }} %
+                            </div>
+                            <div>
+                                <b>Euclidean (min): &nbsp;</b>
+                                {{ Math.round(min_euclid_range_last * 100) / 100 }} - {{
+        Math.round(min_euclid_range_first *
+            100) /
+        100 }} =
+                                {{ Math.round(min_euclid_range * 100) / 100 }}
+                                &nbsp;
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round(min_euclid_range * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff / min_euclid_range * 10000) / 100 }} %
+                            </div>
+                            <div>
+                                <b>Euclidean (min - max): &nbsp;</b>
+                                | {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100)
+        /
+        100 }} | =
+                                {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }}
+                                &nbsp;
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff / Math.abs(min_euclid_last -
+                                max_euclid_first) * 10000)
+                                /
+                                100 }} %
+                            </div>
+                            <div>
+                                <b>Euclidean (max - min): &nbsp;</b>
+                                {{ Math.round(max_euclid_last * 100) / 100 }} - {{ Math.round(min_euclid_first * 100) /
+                                100
+                                }} =
+                                {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }}
+                                &nbsp;
+                                {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
+                                {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }} =
+                                {{ Math.round(getSumChosenEuclid(combined).diff / (max_euclid_last - min_euclid_first) *
+                                10000)
+                                /
+                                100 }} %
+                            </div>
+                        </span>
+                    </template>
+                </va-data-table>
             </span>
-            <div>
-                <div style="display: inline-block">
-                    <MyCounter :key="'perPage_' + perPage" :min_value="1"
-                        :max_value="Math.min(Math.ceil(this.filtered.length), 10)" v-bind:value="perPage"
-                        @input="(n) => (perPage = n)" :is_page_size="true" :some_text="'Per page'">
-                    </MyCounter>
-                </div>
-                <div style="display: inline-block; margin-left: 10px">
-                    <MyCounter :key="'currentPage_' + currentPage" :min_value="1"
-                        :max_value="Math.ceil(this.filtered.length / perPage)" v-bind:value="currentPage"
-                        @input="(n) => (currentPage = n)" :is_page_number="true" :some_text="'Page'">
-                    </MyCounter>
-                </div>
-            </div>
-            <br />
-            <va-data-table :items="rides" :filter="filter" :columns="columns" :hoverable="true" :per-page="perPage"
-                :current-page="currentPage" @filtered="filtered = $event.items" no-data-filtered-html="No results"
-                no-data-html="No data" :filter-method="customFilteringFn">
-                <template #header(vehicle)>Vehicle</template>
-                <template #header(ride)>Ride</template>
-                <template #header(ws)>Window size</template>
-                <template #header(combined)><span v-if="is_admin">Score</span></template>
-                <template #cell(combined)="{ source: combined }">
-                    <span v-if="combined.other.length">
-                        <div>
-                            <b>Rank: &nbsp;</b>
-                            {{ getSumChosen(combined.other).sum_row }} / 75 =
-                            {{ Math.round(getSumChosen(combined.other).sum_row / 75 * 100) / 100 }} %
-                        </div>
-                        <div>
-                            <b>First quartile: &nbsp;</b>
-                            {{ getSumChosen(combined.other).correct_chosen }} / 5 =
-                            {{ Math.round(getSumChosen(combined.other).correct_chosen / 5 * 10000) / 100 }} %
-                        </div>
-                        <div>
-                            <b>Most similar: &nbsp;</b>
-                            <va-icon name="done" v-if="getSumChosen(combined.other).one_chosen"></va-icon>
-                            <va-icon name="close" v-else></va-icon>
-                        </div>
-                        <div>
-                            <b>Euclidean: &nbsp;</b>
-                            {{ Math.round(getSumChosenEuclid(combined).chosen_sum * 100) / 100 }} - {{
-                                Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }}
-                            &nbsp;
-                            {{ Math.round(getSumChosenEuclid(combined).last_five * 100) / 100 }} - {{
-                                Math.round(getSumChosenEuclid(combined).first_five * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }}
-                        </div>
-                        <div>
-                            <b>Euclidean (percent): &nbsp;</b>
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round(getSumChosenEuclid(combined).max_diff * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff_percent * 100) / 100 }} %
-                        </div>
-                        <div>
-                            <b>Euclidean (average): &nbsp;</b>
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round(avg_euclid_range * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff / avg_euclid_range * 10000) / 100 }} %
-                        </div>
-                        <div>
-                            <b>Euclidean (median): &nbsp;</b>
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round(median_euclid_range * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff / median_euclid_range * 10000) / 100 }} %
-                        </div>
-                        <div>
-                            <b>Euclidean (max): &nbsp;</b>
-                            {{ Math.round(max_euclid_range_last * 100) / 100 }} - {{ Math.round(max_euclid_range_first *
-                                100) /
-                                100 }} =
-                            {{ Math.round(max_euclid_range * 100) / 100 }}
-                            &nbsp;
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round(max_euclid_range * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff / max_euclid_range * 10000) / 100 }} %
-                        </div>
-                        <div>
-                            <b>Euclidean (min): &nbsp;</b>
-                            {{ Math.round(min_euclid_range_last * 100) / 100 }} - {{ Math.round(min_euclid_range_first *
-                                100) /
-                                100 }} =
-                            {{ Math.round(min_euclid_range * 100) / 100 }}
-                            &nbsp;
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round(min_euclid_range * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff / min_euclid_range * 10000) / 100 }} %
-                        </div>
-                        <div>
-                            <b>Euclidean (min - max): &nbsp;</b>
-                            | {{ Math.round(min_euclid_last * 100) / 100 }} - {{ Math.round(max_euclid_first * 100) / 100 }} | =
-                            {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }}
-                            &nbsp;
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round(Math.abs(min_euclid_last - max_euclid_first) * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff / Math.abs(min_euclid_last - max_euclid_first) * 10000)
-                                /
-                                100 }} %
-                        </div>
-                        <div>
-                            <b>Euclidean (max - min): &nbsp;</b>
-                            {{ Math.round(max_euclid_last * 100) / 100 }} - {{ Math.round(min_euclid_first * 100) / 100 }} =
-                            {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }}
-                            &nbsp;
-                            {{ Math.round(getSumChosenEuclid(combined).diff * 100) / 100 }} /
-                            {{ Math.round((max_euclid_last - min_euclid_first) * 100) / 100 }} =
-                            {{ Math.round(getSumChosenEuclid(combined).diff / (max_euclid_last - min_euclid_first) * 10000)
-                                /
-                                100 }} %
-                        </div>
-                    </span>
-                </template>
-            </va-data-table>
+            <NoDataToDisplay v-if="rides.length <= 0" customMessage="No rides">
+            </NoDataToDisplay>
         </span>
-        <NoDataToDisplay v-if="rides.length <= 0" customMessage="No rides">
-        </NoDataToDisplay>
     </span>
 </template>
 
