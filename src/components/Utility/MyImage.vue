@@ -1,6 +1,6 @@
 <template>
     <va-card :color="color_compute"
-        style="padding: 5px; margin: 5px; display: inline-block; vertical-align: top; text-align: left; width: 18%; max-width: 200px"
+        style="padding: 5px; margin: 5px; display: inline-block; vertical-align: top; text-align: left; width: 18%; max-width: 100px"
         v-on:click="checkSelect()">
         <va-image :ratio="1" :id="my_vehicle + '/' + my_ride"
             :src="'/cleaned_png/' + my_vehicle + '/' + my_ride + '/' + my_vehicle + '_' + my_ride + '.png'"></va-image>
