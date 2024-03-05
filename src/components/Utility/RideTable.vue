@@ -474,7 +474,7 @@ export default {
                     me.perPage = 1;
                     me.currentPage = 1;
                     me.fully_loaded = true;
-                    if (me.user.uid == me.$props.user_to_find && me.count_rated != 2* AllData.vehicles.length * AllData.vehicles[0].rides.length) {
+                    if (me.user.uid == me.$props.user_to_find && me.count_rated != me.rides.length) {
                         me.findNextUnrated();
                     }
                 });
