@@ -32,7 +32,7 @@ export default {
   </h4>
   <br />
   <div>
-    The <b style="color: #3D9209">5</b> most similar images among <b style="color: #E42222">20</b> displayed images must be selected for a total of <b style="color: #154EC1">28</b> baseline images. 
+    The <b style="color: #3D9209">5</b> most similar images among <b style="color: #E42222">20</b> displayed images must be selected for a total of <b style="color: #154EC1">56</b> baseline images. 
   </div>
   <br />
   <div>
