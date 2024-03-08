@@ -23,7 +23,7 @@ const projectFirestore = firebase.firestore();
 const projectAuth = firebase.auth();
 const projectStorage = firebase.storage();
 const usersRef = projectFirestore.collection("users");     
-const ratingsRef = projectFirestore.collection("ratings_final");
+const ratingsRef = projectFirestore.collection("ratings_double");
 
 // Initialize the FirebaseUI Widget using Firebase.
 const ui = new firebaseui.auth.AuthUI(firebase.auth());
@@ -32,6 +32,7 @@ const ui = new firebaseui.auth.AuthUI(firebase.auth());
 const uiConfig = {
   signInOptions: [
     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+    firebase.auth.EmailAuthProvider.PROVIDER_ID
   ],
   signInSuccessUrl: ["#/sign-in-success"],
   // Other config options...

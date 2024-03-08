@@ -7,7 +7,6 @@ import icon_folder from "../../assets/icons/rule_folder_FILL0_wght400_GRAD0_opsz
 import icon_search from "../../assets/icons/person_search_FILL0_wght400_GRAD0_opsz48.png";
 
 import AllData from '../../assets/all_no_data_short.json';
-import { ratingsRef } from "../../firebase_main.js";
 import { usersRef } from "../../firebase_main.js";
 
 export default {
