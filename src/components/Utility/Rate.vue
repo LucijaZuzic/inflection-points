@@ -20,8 +20,8 @@
           </va-button>
         </va-modal>
       </h4>
-      <br /> 
-      <div>
+      <br />
+      <div v-if="my_index > 1 || clicked_info">
         <div>
           <MyImage :image_entry='{ "order": 0, "compare_vehicle": vehicle, "compare_ride": ride }'
             :selected_entry="false" :selectable_entry="false" />
@@ -33,6 +33,12 @@
           :image_entry='selected_similar[index_similar_entry].entry'
           :selected_entry="selected_similar[index_similar_entry].is_selected" :selectable_entry="true"
           @input="(n) => (calculateSend(index_similar_entry))" />
+      </div>
+      <div v-else>
+        <Info></Info>
+        <br />
+        <va-button @click="clicked_info = true" :rounded="false" style="border: none"> OK
+        </va-button>
       </div>
     </span>
   </body>
@@ -100,6 +106,7 @@ export default {
       selected_vals.push({ "entry": shuffle_me[i], "is_selected": false })
     }
     return {
+      clicked_info: false,
       my_index: -1,
       fully_loaded: false,
       selected_similar: selected_vals,
